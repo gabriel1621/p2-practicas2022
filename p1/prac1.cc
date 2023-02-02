@@ -1,3 +1,4 @@
+//Pardo Ramon, Gabriel 48775081Q
 #include <iostream>
 
 using namespace std;
@@ -71,10 +72,63 @@ void showMenu(){
         << "q- Quit" << endl
         << "Option: ";
 }
+// Funcion que crea el jugador
+void createPlayer(Player &player){
+
+    int difficultad=0;
+
+
+    cout << "Name: ";
+    cin.get(player.name,KNAME-1);
+
+
+    while((difficultad<1) || (difficultad>3)){
+
+        cout << "Difficulty: ";
+        cin >> difficultad;
+
+        if((difficultad>0) && (difficultad<3)){
+
+            error(ERR_DIFFICULTY);
+
+        }
+
+    }
+
+    player.difficulty=difficultad;
+    player.score=0;
+    player.wins=0;
+    player.losses=0;
+
+        
+
+
+
+
+
+
+
+}
+
+// Funcion que crea el nivel
+void createLevel(Level &level){
+    
+    if(level.id>10){
+        showMenu();
+    }
+    else{
+
+    }
+}
 
 // Función principal (tendrás que añadirle más código tuyo)
 int main(){
     char option;
+
+    Player player;
+    Level level;
+
+    createPlayer(player);
     
     do{
         showMenu();
