@@ -1,10 +1,12 @@
 //Pardo Ramon, Gabriel 48775081Q
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
 const int KNAME=40;
 const int KMAXOBSTACLES=20;
+
 
 enum Error{
     ERR_OPTION,
@@ -40,6 +42,8 @@ struct Level{
     Coordinate start;
     Coordinate finish;
 };
+
+vector<Level> levels;
 
 // Función que muestra los mensajes de error
 void error(Error e){
@@ -79,7 +83,7 @@ void createPlayer(Player &player){
 
 
     cout << "Name: ";
-    cin.get(player.name,KNAME-1);
+    cin.getline(player.name,KNAME-1);
 
 
     while((difficultad<1) || (difficultad>3)){
@@ -87,7 +91,7 @@ void createPlayer(Player &player){
         cout << "Difficulty: ";
         cin >> difficultad;
 
-        if((difficultad>0) && (difficultad<3)){
+        if((difficultad>0) || (difficultad<3)){
 
             error(ERR_DIFFICULTY);
 
@@ -100,31 +104,105 @@ void createPlayer(Player &player){
     player.wins=0;
     player.losses=0;
 
-        
-
-
-
-
-
-
-
 }
 
+// Funcion que pone obstaculos en el nivel
+void colocarObstaculo(){
+
+}
 // Funcion que crea el nivel
-void createLevel(Level &level){
+void createLevel(Level &level, Player &player){
+
     
-    if(level.id>10){
+    Level nuevoNivel;
+    
+    int netxID=0;
+    int numLevels=levels.size();
+
+    if(numLevels>10){
         showMenu();
     }
     else{
 
+        nuevoNivel.id=netxID++;
+
+        switch(player.difficulty){
+            case '1':
+
+                nuevoNivel.size=5;
+                nuevoNivel.numObstacles=5;
+
+                nuevoNivel.start.row=4;
+                nuevoNivel.start.column=0;
+                nuevoNivel.finish.row=0;
+                nuevoNivel.finish.column=4;
+
+                break;
+            case '2':
+
+                nuevoNivel.size=7;
+                nuevoNivel.numObstacles=10;
+
+                nuevoNivel.start.row=6;
+                nuevoNivel.start.column=0;
+                nuevoNivel.finish.row=0;
+                nuevoNivel.finish.column=6;
+
+                break;
+            case '3':
+
+                nuevoNivel.size=10;
+                nuevoNivel.numObstacles=20;
+
+                nuevoNivel.start.row=9;
+                nuevoNivel.start.column=0;
+                nuevoNivel.finish.row=0;
+                nuevoNivel.finish.column=9;
+                break;
+        }
+
+        levels.push_back(nuevoNivel);
+
     }
 }
+
+// Funcion que borra niveles
+void deleteLevel(Level &level){
+
+    int borrarID=0, identificador=0;
+    bool idCorrecta=true;
+
+    cout << "Id: ";
+    cin>> borrarID;
+
+    for(int i=0;i<(int) levels.size(); i++){
+
+        if(levels[i].id==borrarID){
+            idCorrecta=false;
+            identificador=i;
+        }
+
+    }
+
+    if(idCorrecta){
+        error(ERR_ID);
+    }
+    else{
+        levels.erase(levels.begin()+identificador);
+    }
+
+
+
+}
+void showLevel(){}
+void playGame(){}
+void reportPlayer(Player &player){}
 
 // Función principal (tendrás que añadirle más código tuyo)
 int main(){
     char option;
 
+    
     Player player;
     Level level;
 
@@ -137,14 +215,19 @@ int main(){
         
         switch(option){
             case '1': // Llamar a la función para crear un nuevo nivel
+                createLevel(level,player);
                 break;
             case '2': // Llamar a la función para borrar un nivel existente
+                deleteLevel(level);
                 break;
             case '3': // Llamar a la función para mostrar los niveles creados
+                showLevel();
                 break;
             case '4': // Llamar a la función para jugar
+                playGame();
                 break;
             case '5': // Llamar a la función para mostrar información del jugador
+                reportPlayer(player);
                 break;
             case 'q': break;
             default: error(ERR_OPTION); // Muestra "ERROR: wrong option"
