@@ -1,6 +1,7 @@
 //Pardo Ramon, Gabriel 48775081Q
 #include <iostream>
 #include <vector>
+#include <cstring>
 
 using namespace std;
 
@@ -43,7 +44,6 @@ struct Level{
     Coordinate finish;
 };
 
-vector<Level> levels;
 
 // Función que muestra los mensajes de error
 void error(Error e){
@@ -91,7 +91,7 @@ void createPlayer(Player &player){
         cout << "Difficulty: ";
         cin >> difficultad;
 
-        if((difficultad>0) || (difficultad<3)){
+        if((difficultad<1) || (difficultad>3)){
 
             error(ERR_DIFFICULTY);
 
@@ -111,7 +111,7 @@ void colocarObstaculo(){
 
 }
 // Funcion que crea el nivel
-void createLevel(Level &level, Player &player){
+void createLevel(Level &level, Player &player, vector<Level> &levels){
 
     
     Level nuevoNivel;
@@ -167,7 +167,7 @@ void createLevel(Level &level, Player &player){
 }
 
 // Funcion que borra niveles
-void deleteLevel(Level &level){
+void deleteLevel(Level &level, vector<Level> &levels){
 
     int borrarID=0, identificador=0;
     bool idCorrecta=true;
@@ -196,13 +196,43 @@ void deleteLevel(Level &level){
 }
 void showLevel(){}
 void playGame(){}
-void reportPlayer(Player &player){}
+void reportPlayer(Player &player){
+
+    string imprimirDificultad;
+
+    switch(player.difficulty){
+
+        case 1:
+         imprimirDificultad= "Easy";
+         cout << player.difficulty;
+         break;
+        case 2:
+         imprimirDificultad= "Medium";
+         break;
+        case 3:
+         imprimirDificultad= "Hard";
+         break;
+
+    }
+    
+    
+
+    cout << "[Report]" << endl
+         << "Name: " << player.name << endl
+         << "Difficulty: " << imprimirDificultad << endl
+         << "Score: " << player.score << endl
+         << "Wins: " << player.wins << endl
+         << "Losses: " << player.losses << endl
+         << "Total: " << player.wins+player.losses<<endl; 
+
+}
 
 // Función principal (tendrás que añadirle más código tuyo)
 int main(){
     char option;
 
-    
+    vector<Level> levels;
+
     Player player;
     Level level;
 
@@ -215,10 +245,10 @@ int main(){
         
         switch(option){
             case '1': // Llamar a la función para crear un nuevo nivel
-                createLevel(level,player);
+                createLevel(level,player,levels);
                 break;
             case '2': // Llamar a la función para borrar un nivel existente
-                deleteLevel(level);
+                deleteLevel(level,levels);
                 break;
             case '3': // Llamar a la función para mostrar los niveles creados
                 showLevel();
