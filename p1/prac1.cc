@@ -107,13 +107,16 @@ void createPlayer(Player &player){
 
 }
 bool comprobarCoordenada(int row, int column, vector<Level> &levels, Level &level, int levelID){
-    int size=levels[levelID].size;
+
+    int size= levels[levelID].size;
+    
     
     if((row>=0 && row<size) && (column>=0 && column<size)){
 
         bool obstacle = true;
-
+        
         // Comprobar si hay un obstáculo en la celda actual
+        /*
         for (int k = 0; k < levels[levelID].numObstacles; k++) {
             if ((levels[levelID].obstacles[k].row == row && levels[levelID].obstacles[k].column == column) ||
                 (levels[levelID].obstacles[k-1].row == row && levels[levelID].obstacles[k].column == column) ||
@@ -124,7 +127,7 @@ bool comprobarCoordenada(int row, int column, vector<Level> &levels, Level &leve
                 obstacle = false;
                 break;
             }
-        }
+        }*/
         
         if(obstacle){
             if((levels[levelID].start.row != row && levels[levelID].start.column != column)&&
@@ -168,15 +171,15 @@ void colocarObstaculo(Level &level, int levelID, vector<Level> &levels){
 
         //compruebo numero de obstaculos
         
-        if(level.size==5 && coordenadas.size()>10){
+        if(levels[levelID].size==5 && coordenadas.size()>10){
             coordenadas.clear();
             error(ERR_OBSTACLES);
         }
-        else if(level.size==7 && coordenadas.size()>20){
+        else if(levels[levelID].size==7 && coordenadas.size()>20){
             coordenadas.clear();
             error(ERR_OBSTACLES);
         }
-        else if(level.size==10 && coordenadas.size()>40){
+        else if(levels[levelID].size==10 && coordenadas.size()>40){
             coordenadas.clear();
             error(ERR_OBSTACLES);
         }
@@ -187,13 +190,13 @@ void colocarObstaculo(Level &level, int levelID, vector<Level> &levels){
     
     
     int x = 0;
-    for (unsigned int i = 0; i < coordenadas.size(); i += 2) {
+    for (unsigned int i = 0; i < coordenadas.size()-1; i += 2) {
         int row = coordenadas[i];
         int column = coordenadas[i+1];
         
         if (comprobarCoordenada(row, column,levels, level,levelID)) {
-            level.obstacles[x].row = row;
-            level.obstacles[x].column = column;
+            levels[levelID].obstacles[x].row = row;
+            levels[levelID].obstacles[x].column = column;
             x++;
         }
         else{
@@ -203,7 +206,7 @@ void colocarObstaculo(Level &level, int levelID, vector<Level> &levels){
         }
     }
 
-    level.numObstacles = x;
+    levels[levelID].numObstacles = x;
 }
 
 // Funcion que dibuja el mapa
@@ -366,8 +369,8 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
         for (int i = 0; i < (int) instrucciones.length(); i++) {
             cout << "Instruction " << instrucciones[i] << endl;
 
-            int newRow = level.start.row;
-            int newColumn = level.start.column;
+            int newRow = levels[id].start.row;
+            int newColumn = levels[id].start.column;
 
             switch (instrucciones[i]) {
             case 'U':
@@ -388,7 +391,7 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
                 break;
             }
 
-            if (newRow < 0 || newRow >= level.size || newColumn < 0 || newColumn >= level.size) {
+            if (newRow < 0 || newRow >= levels[id].size || newColumn < 0 || newColumn >= levels[id].size) {
                 error(ERR_COORDINATE);
                 lose = true;
                 break;
@@ -396,8 +399,8 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
 
             bool collision = false;
 
-            for (int j = 0; j < level.numObstacles; j++) {
-                if (level.obstacles[j].row == newRow && level.obstacles[j].column == newColumn) {
+            for (int j = 0; j < levels[id].numObstacles; j++) {
+                if (levels[id].obstacles[j].row == newRow && levels[id].obstacles[j].column == newColumn) {
                     collision = true;
                     break;
                 }
@@ -409,16 +412,16 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
                 break;
             }
 
-            level.start.row = newRow;
-            level.start.column = newColumn;
+            levels[id].start.row = newRow;
+            levels[id].start.column = newColumn;
 
             dibujarMapa(levels[id]);
 
-            if (level.start.row == level.finish.row && level.start.column == level.finish.column) {
-                level.obstacles[level.numObstacles].row = level.finish.row;
-                level.obstacles[level.numObstacles].column = level.finish.column;
-                level.numObstacles++;
-                score = 3 * (level.size - 1) - instrucciones.length();
+            if (levels[id].start.row == levels[id].finish.row && levels[id].start.column == levels[id].finish.column) {
+                levels[id].obstacles[levels[id].numObstacles].row = levels[id].finish.row;
+                levels[id].obstacles[levels[id].numObstacles].column = levels[id].finish.column;
+                levels[id].numObstacles++;
+                score = 3 * (levels[id].size - 1) - instrucciones.length();
                 if (score < 0) {
                     score = 0;
                 }
