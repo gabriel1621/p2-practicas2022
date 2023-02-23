@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <sstream>
 
 using namespace std;
 
@@ -106,47 +107,44 @@ void createPlayer(Player &player){
     player.losses=0;
 
 }
-bool comprobarCoordenada(int row, int column, vector<Level> &levels, Level &level, int levelID){
+bool comprobarCoordenada(int row, int column, Level &level) {
 
-    int size= levels[levelID].size;
-    
-    
-    if((row>=0 && row<size) && (column>=0 && column<size)){
+    int size = level.size;
+    bool obstacle = false;
 
-        bool obstacle = true;
-        
-        // Comprobar si hay un obstáculo en la celda actual
-        /*
-        for (int k = 0; k < levels[levelID].numObstacles; k++) {
-            if ((levels[levelID].obstacles[k].row == row && levels[levelID].obstacles[k].column == column) ||
-                (levels[levelID].obstacles[k-1].row == row && levels[levelID].obstacles[k].column == column) ||
-                (levels[levelID].obstacles[k].row == row && levels[levelID].obstacles[k-1].column == column) ||
-                (levels[levelID].obstacles[k].row == row && levels[levelID].obstacles[k+1].column == column) &&
-                (levels[levelID].obstacles[k-1].row != row || levels[levelID].obstacles[k-1].column != column) &&
-                (levels[levelID].obstacles[k+1].row != row || levels[levelID].obstacles[k+1].column != column)) {
-                obstacle = false;
+    // Verificar si la coordenada está dentro de los límites del nivel
+    if ((row >= 0 && row < size) && (column >= 0 && column < size)) {
+
+        // Verificar si hay algún obstáculo en la celda actual
+        for (int k = 0; k < level.numObstacles; k++) {
+            if (level.obstacles[k].row == row && level.obstacles[k].column == column) {
+                obstacle = true;
                 break;
             }
-        }*/
+        }
         
-        if(obstacle){
-            if((levels[levelID].start.row != row && levels[levelID].start.column != column)&&
-                levels[levelID].finish.row != row && levels[levelID].finish.column != column){
+        // Verificar si hay algún obstáculo adyacente a la coordenada actual
+        if (!obstacle) {
+            for (int k = 0; k < level.numObstacles; k++) {
+                if ((level.obstacles[k].row == row - 1 && level.obstacles[k].column == column) ||
+                    (level.obstacles[k].row == row + 1 && level.obstacles[k].column == column) ||
+                    (level.obstacles[k].row == row && level.obstacles[k].column == column - 1) ||
+                    (level.obstacles[k].row == row && level.obstacles[k].column == column + 1)) {
+                    obstacle = true;
+                    break;
+                }
+            }
+        }
 
-                return true;
-            }
-            else{
-                return false;
-            }
+        // Verificar si la coordenada no es el inicio o el fin del nivel
+        if (!obstacle && (level.start.row != row || level.start.column != column) 
+        && (level.finish.row != row || level.finish.column != column)) {
+            return true;
         }
-        else{
-            return false;
-        }
-        
+        return true;
     }
-    else{
-        return false;
-    }
+
+    return false;
 }
 
 
@@ -154,60 +152,78 @@ bool comprobarCoordenada(int row, int column, vector<Level> &levels, Level &leve
 // Funcion que pone obstaculos en el nivel
 
 void colocarObstaculo(Level &level, int levelID, vector<Level> &levels){
-
     string cadenaObstaculos;
-    
-    vector<int> coordenadas(0);
+    vector<int> coordenadas;
 
-    do{
+    do {
         cout << "Obstacles: ";
-        getline(cin,cadenaObstaculos);
+        getline(cin, cadenaObstaculos);
 
-        for (const char c : cadenaObstaculos) {
-            if (isdigit(c)) {
-                coordenadas.push_back(c - '0');
+        stringstream ss(cadenaObstaculos);
+        string item;
+
+        while (getline(ss, item, '|')) {
+            stringstream iss(item);
+            string number;
+
+            while (getline(iss, number, ',')) {
+                int num = stoi(number);
+                coordenadas.push_back(num);
             }
         }
 
-        //compruebo numero de obstaculos
-        
-        if(levels[levelID].size==5 && coordenadas.size()>10){
+        // Verificar el número de obstáculos
+        if (level.size == 5 && coordenadas.size() > 10) {
+            coordenadas.clear();
+            error(ERR_OBSTACLES);
+        } else if (level.size == 7 && coordenadas.size() > 20) {
+            coordenadas.clear();
+            error(ERR_OBSTACLES);
+        } else if (level.size == 10 && coordenadas.size() > 40) {
             coordenadas.clear();
             error(ERR_OBSTACLES);
         }
-        else if(levels[levelID].size==7 && coordenadas.size()>20){
-            coordenadas.clear();
-            error(ERR_OBSTACLES);
-        }
-        else if(levels[levelID].size==10 && coordenadas.size()>40){
-            coordenadas.clear();
-            error(ERR_OBSTACLES);
-        }
-        
-        
-    }while(coordenadas.size()<0);
 
-    
-    
-    int x = 0;
-    for (unsigned int i = 0; i < coordenadas.size()-1; i += 2) {
-        int row = coordenadas[i];
-        int column = coordenadas[i+1];
-        
-        if (comprobarCoordenada(row, column,levels, level,levelID)) {
-            levels[levelID].obstacles[x].row = row;
-            levels[levelID].obstacles[x].column = column;
+        // Verificar las coordenadas
+        bool errorCoord = false;
+        int numObstacles = coordenadas.size() / 2;
+        int x = 0;
+        for (int i = 0; i < numObstacles; i++) {
+            int row = coordenadas[i * 2];
+            int column = coordenadas[i * 2 + 1];
+            if (!comprobarCoordenada(row, column, level)) {
+                errorCoord = true;
+                break;
+            }
+            // Verificar si hay obstáculos adyacentes
+            bool adjObstacle = false;
+            for (int j = 0; j < x; j++) {
+                if (abs(level.obstacles[j].row - row) <= 1 && abs(level.obstacles[j].column - column) <= 1) {
+                    adjObstacle = true;
+                    break;
+                }
+            }
+            if (adjObstacle) {
+                errorCoord = true;
+                break;
+            }
+            // Agregar el obstáculo al nivel
+            level.obstacles[x].row = row;
+            level.obstacles[x].column = column;
             x++;
         }
-        else{
-            
-            error(ERR_COORDINATE);
-            colocarObstaculo(level, levelID,levels);
-        }
-    }
 
-    levels[levelID].numObstacles = x;
+        // Verificar si se ha producido algún error
+        if (errorCoord) {
+            coordenadas.clear();
+            error(ERR_COORDINATE);
+        } else {
+            level.numObstacles = x;
+        }
+
+    } while (coordenadas.empty());
 }
+
 
 // Funcion que dibuja el mapa
 void dibujarMapa(Level &level) {
@@ -229,13 +245,13 @@ void dibujarMapa(Level &level) {
 
             // Dibujar la celda actual
             if (obstacle) {
-                cout << "X ";
-            } else if (level.finish.row == i && level.finish.column == j) {
-                cout << "F ";
+                cout << "X";
             } else if (level.start.row == i && level.start.column == j) {
-                cout << "R ";
+                cout << "R";
+            } else if (level.finish.row == i && level.finish.column == j) {
+                cout << "F";
             } else {
-                cout << "O ";
+                cout << "O";
             }
         }
         cout << endl;
@@ -245,7 +261,8 @@ void dibujarMapa(Level &level) {
 void createLevel(Level &level, Player &player, vector<Level> &levels){
 
     Level nuevoNivel;
-    int nextID = levels.empty() ? 0 : levels.back().id + 1;
+    int nextID = levels.empty() ? 1 : levels.back().id + 1;
+    
     
     if(levels.size() >= 10){
         error(ERR_LEVEL);
@@ -257,27 +274,28 @@ void createLevel(Level &level, Player &player, vector<Level> &levels){
     switch(player.difficulty){
         case 1:
             nuevoNivel.size=5;
-            nuevoNivel.numObstacles=5;
+            nuevoNivel.numObstacles=0;
             nuevoNivel.start.row=4;
             nuevoNivel.start.column=0;
             nuevoNivel.finish.row=0;
             nuevoNivel.finish.column=4;
+            
             break;
         case 2:
             nuevoNivel.size=7;
-            nuevoNivel.numObstacles=10;
+            nuevoNivel.numObstacles=0;
             nuevoNivel.start.row=6;
             nuevoNivel.start.column=0;
             nuevoNivel.finish.row=0;
             nuevoNivel.finish.column=6;
             break;
         case 3:
-            nuevoNivel.size=9;
-            nuevoNivel.numObstacles=15;
-            nuevoNivel.start.row=8;
+            nuevoNivel.size=10;
+            nuevoNivel.numObstacles=0;
+            nuevoNivel.start.row=9;
             nuevoNivel.start.column=0;
             nuevoNivel.finish.row=0;
-            nuevoNivel.finish.column=8;
+            nuevoNivel.finish.column=9;
             break;
         default:
             error(ERR_DIFFICULTY);
@@ -286,10 +304,10 @@ void createLevel(Level &level, Player &player, vector<Level> &levels){
     
     levels.push_back(nuevoNivel);
 
-    colocarObstaculo(levels.back(), nextID, levels);
-
-    cout << "Level " << nextID << endl;
-    dibujarMapa(levels[nextID]);
+    int numLevel=nextID;
+    colocarObstaculo(levels[nextID-1], nextID, levels);
+    cout << "Level " << numLevel << endl;
+    dibujarMapa(levels[nextID-1]);
 
 }
 
@@ -297,6 +315,7 @@ void createLevel(Level &level, Player &player, vector<Level> &levels){
 void deleteLevel(Level &level, vector<Level> &levels) {
     int borrarID = 0, identificador = 0;
     bool idCorrecta = true;
+    bool comprobar=false;
 
     cout << "Id: ";
     cin >> borrarID;
@@ -312,24 +331,38 @@ void deleteLevel(Level &level, vector<Level> &levels) {
     if (idCorrecta) {
         error(ERR_ID);
     } else {
-        string preguntaSeguridad;
+        char preguntaSeguridad;
+        
 
-        cout << "Are you sure? [y/n]" << endl;
-        getline(cin, preguntaSeguridad);
+        do{
+            cout << "Are you sure? [y/n] " ;
+            cin>>preguntaSeguridad;
+            cin.get();
 
-        if (preguntaSeguridad == "y" || preguntaSeguridad == "Y") {
-            levels.erase(levels.begin() + identificador);
-        } else {
-            showMenu();
-        }
+            
+
+            if (preguntaSeguridad == 'y' || preguntaSeguridad == 'Y') {
+
+                levels.erase(levels.begin() + identificador);
+                comprobar=true;
+
+            }else if(preguntaSeguridad == 'n' || preguntaSeguridad == 'N'){
+                comprobar=true;
+                
+
+            }
+
+        }while(comprobar == false);
+
+        
     }
 }
 
 void showLevel(Level &level, vector<Level> &levels){
     
     for(unsigned int i=0;i<levels.size();i++){
-
-        cout << "Level " << levels[i].id << endl;
+        int numLevel=levels[i].id;
+        cout << "Level " << numLevel << endl;
         dibujarMapa(levels[i]);
 
     }
@@ -337,7 +370,7 @@ void showLevel(Level &level, vector<Level> &levels){
 
 
 void playGame(Level &level, vector<Level> &levels, Player &player) {
-    int id = 0, identificador = 0;
+    int id = 0;
     bool idCorrecta = true;
 
     cout << "Id: ";
@@ -347,7 +380,6 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
 
         if (levels[i].id == id) {
             idCorrecta = false;
-            identificador = i;
         }
 
     }
@@ -357,32 +389,37 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
     }
     else {
         cout << "Level " << id << endl;
+        id--;
         dibujarMapa(levels[id]);
 
         string instrucciones;
-        cout << "Instructions: " << endl;
+        cout << "Instructions: ";
         cin >> instrucciones;
 
         int score = 0;
         bool lose = false;
 
         for (int i = 0; i < (int) instrucciones.length(); i++) {
-            cout << "Instruction " << instrucciones[i] << endl;
+            
 
             int newRow = levels[id].start.row;
             int newColumn = levels[id].start.column;
 
             switch (instrucciones[i]) {
             case 'U':
+                
                 newRow--;
                 break;
             case 'D':
+                
                 newRow++;
                 break;
             case 'L':
+                
                 newColumn--;
                 break;
             case 'R':
+                
                 newColumn++;
                 break;
             default:
@@ -390,11 +427,19 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
                 lose = true;
                 break;
             }
+            
+            if (lose) {
+                cout << "You lose" << endl;
+                player.losses++;
+                return;
+            }
 
             if (newRow < 0 || newRow >= levels[id].size || newColumn < 0 || newColumn >= levels[id].size) {
-                error(ERR_COORDINATE);
-                lose = true;
-                break;
+                error(ERR_INSTRUCTION);
+                cout << "You lose" << endl;
+                player.losses++;
+                return;
+                
             }
 
             bool collision = false;
@@ -407,14 +452,16 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
             }
 
             if (collision) {
-                error(ERR_COORDINATE);
-                lose = true;
-                break;
+                error(ERR_INSTRUCTION);
+                cout << "You lose" << endl;
+                player.losses++;
+                return;
             }
 
             levels[id].start.row = newRow;
             levels[id].start.column = newColumn;
 
+            cout << "Instruction " << instrucciones[i] << endl;
             dibujarMapa(levels[id]);
 
             if (levels[id].start.row == levels[id].finish.row && levels[id].start.column == levels[id].finish.column) {
@@ -432,11 +479,7 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
             }
         }
 
-        if (lose) {
-            cout << "You lose" << endl;
-            player.losses++;
-            return;
-        }
+
     }
 }
 
@@ -445,20 +488,19 @@ void playGame(Level &level, vector<Level> &levels, Player &player) {
 void reportPlayer(Player &player){
 
     string imprimirDificultad;
-
-    switch(player.difficulty){
-
-        case 1:
-         imprimirDificultad= "Easy";
-         cout << player.difficulty;
-         break;
-        case 2:
-         imprimirDificultad= "Medium";
-         break;
-        case 3:
-         imprimirDificultad= "Hard";
-         break;
-
+    
+    switch (player.difficulty) {
+    case 1:
+     imprimirDificultad= "Easy";
+     break;
+    case 2:
+     imprimirDificultad= "Medium";
+     break;
+     case 3:
+     imprimirDificultad= "Hard";
+     break;
+    default:
+     break;
     }
     
     cout << "[Report]" << endl
@@ -475,7 +517,7 @@ void reportPlayer(Player &player){
 int main(){
     char option;
 
-    vector<Level> levels(0);
+    vector<Level> levels;
 
     Player player;
     Level level;
