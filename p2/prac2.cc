@@ -137,71 +137,96 @@ void addSubscriber(Platform& platform) {
 }
 
 bool isValidIp(string ip) {
-    vector<string> parts;
-    string part;
-    stringstream ss(ip);
+  vector<string> parts;
+  string part;
+  stringstream ss(ip);
 
-    // Separo por puntos
-    while (getline(ss, part, '.')) {
-        parts.push_back(part);
+  // Separo por puntos
+  while (getline(ss, part, '.')) {
+    parts.push_back(part);
+  }
+
+  // Compruebo que sean exacteamente 4 grupos
+  if (parts.size() != 4) {
+    return false;
+  }
+
+  // Compruebo que estente entre los valores correctos
+  for (string part : parts) {
+    int value = stoi(part);
+    if (value < 0 || value > 255) {
+      return false;
     }
-
-    // Compruebo que sean exacteamente 4 grupos
-    if (parts.size() != 4) {
-        return false;
-    }
-
-    // Compruebo que estente entre los valores correctos
-    for (string part : parts) {
-
-      int value = stoi(part);
-      if (value < 0 || value > 255) {
-        return false;
-      }
-
-    }
-
-    return true;
+  }
+  return true;
 }
 
+bool isValidId(Platform& platform, int id){
+  bool idCorrecta = true;
 
+  // Si el identificador es vacío o no existe, mostramos un error y volvemos al menú principal
+  for (int i = 0; i < platform.subscribers.size(); i++) {
+    if (platform.subscribers[i].id == id) {
+      idCorrecta = false;
+    }
+  }
+
+  if (idCorrecta) {
+    error(ERR_ID);
+    return false;
+  }
+  else{
+    return true;
+  }
+
+}
 
 void addSubscriberIp(Platform& platform) {
-    string id, ip;
-
+  string ip;
+  int id=0;
+  do{
     // Pedimos el identificador del suscriptor
     cout << "Enter subscriber id: ";
-    getline(cin, id);
+    cin >> id;
+    cin.ignore();
 
-    // Si el identificador es vacío o no existe, mostramos un error y volvemos al menú principal
-    if (id.empty() || platform.subscribers.count(id) == 0) {
-        cout << "ERR_ID" << endl;
-        return;
+  }while(!isValidId(platform, id));
+
+
+  // Pedimos la dirección IP a añadir
+  while (true) {
+    cout << "Enter IP: ";
+    getline(cin, ip);
+
+    // Si la dirección es vacía o no es válida, mostramos un error y pedimos de nuevo la dirección
+    if (ip.empty() || !isValidIp(ip)) {
+      cout << "ERR_IP" << endl;
+      continue;
     }
 
-    // Pedimos la dirección IP a añadir
-    while (true) {
-        cout << "Enter IP: ";
-        getline(cin, ip);
+    // Añadimos la dirección IP al vector de direcciones del suscriptor
+    platform.subscribers[id-1].ips.push_back(ip);
 
-        // Si la dirección es vacía o no es válida, mostramos un error y pedimos de nuevo la dirección
-        if (ip.empty() || !isValidIp(ip)) {
-            cout << "ERR_IP" << endl;
-            continue;
-        }
+    // a almacenamos en el campo mainIp del suscriptor
+    platform.subscribers[id].mainIp = ip;
 
-        // Añadimos la dirección IP al vector de direcciones del suscriptor
-        platform.subscribers[id].ips.push_back(ip);
-
-        // Calculamos la dirección IP principal y la almacenamos en el campo mainIp del suscriptor
-        //subscribers[id].mainIp = calculateMainIp(subscribers[id].ips);
-
-        break;
-    }
+    break;
+  }
 }
 
 
 void deleteSubscriber(Platform &platform) {
+  int id=0;
+  
+  // Pedimos el identificador del suscriptor
+  cout << "Enter subscriber id: ";
+  cin >> id;
+  cin.ignore();
+
+  if(isValidId(platform, id)){
+    cout << "pito";
+    platform.subscribers.erase(platform.subscribers.begin()+id-1);
+  }
 }
 
 void importFromCsv(Platform &platform) {
