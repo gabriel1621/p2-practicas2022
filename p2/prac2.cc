@@ -240,8 +240,42 @@ void loadData(Platform &platform) {
 
 void saveData(const Platform &platform) {
 }
+void showImportMenu(){
+  cout << "[Import/export options]" << endl
+       <<"1- Import from CSV <<endl"<< endl
+       <<"2- Export to CSV"<<endl
+       <<"3- Load data"<<endl
+       <<"4- Save data"<<endl
+       <<"b- Back to main menu"<<endl
+       <<"Option:"<<endl;
+}
 
 void importExportMenu(Platform &platform) {
+  char option;
+  do {
+    showImportMenu();
+    cin >> option;
+    cin.get();
+
+    switch (option) {
+      case '1':
+        importFromCsv(platform);
+        break;
+      case '2':
+        exportToCsv(platform);
+        break;
+      case '3':
+        loadData(platform);
+        break;
+      case '4':
+        saveData(platform);
+        break;
+      case 'b':
+        break;
+      default:
+        error(ERR_OPTION);
+    }
+  } while (option != 'b');
 }
 
 int main(int argc, char *argv[]) {
