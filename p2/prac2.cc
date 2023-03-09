@@ -11,7 +11,8 @@ using namespace std;
 const int KMAXSTRING = 50;
 const int KMAXIP = 16;
 const int MIN_NAME_LENGTH = 3;
-const regex EMAIL_REGEX(R"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)");
+const regex EMAIL_REGEX(R"(^[^.\s][^@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)");
+const char DOSPUNTOS = ':';
 
 enum Error {
   ERR_OPTION,
@@ -106,34 +107,34 @@ bool isValidEmail(const string& email) {
 }
 
 void addSubscriber(Platform& platform) {
-    string name;
-    do {
-        cout << "Enter name: ";
-        cin >> name;
-        if (!isValidName(name)) {
-            cout << "ERR_NAME" << endl;
-        }
-    } while (!isValidName(name));
+  string name;
+  do {
+    cout << "Enter name: ";
+    getline(cin,name);
+    if (!isValidName(name)) {
+      cout << "ERR_NAME" << endl;
+    }
+  } while (!isValidName(name));
     
-    string email;
-    do {
-        cout << "Enter email: ";
-        cin >> email;
-        if (!isValidEmail(email)) {
-            cout << "ERR_EMAIL" << endl;
-        }
-    } while (!isValidEmail(email));
+  string email;
+  do {
+    cout << "Enter email: ";
+    cin >> email;
+    if (!isValidEmail(email)) {
+      cout << "ERR_EMAIL" << endl;
+    }
+  } while (!isValidEmail(email));
     
-    // Create new subscriber
-    Subscriber newSubscriber;
-    newSubscriber.id = platform.nextId++;
-    newSubscriber.name = name;
-    newSubscriber.email = email;
+  // Create new subscriber
+  Subscriber newSubscriber;
+  newSubscriber.id = platform.nextId++;
+  newSubscriber.name = name;
+  newSubscriber.email = email;
     
-    // Add new subscriber to platform
-    platform.subscribers.push_back(newSubscriber);
+  // Add new subscriber to platform
+  platform.subscribers.push_back(newSubscriber);
     
-    cout << "Subscriber added successfully with ID " << newSubscriber.id << endl;
+  
 }
 
 bool isValidIp(string ip) {
@@ -161,11 +162,11 @@ bool isValidIp(string ip) {
   return true;
 }
 
-bool isValidId(Platform& platform, int id){
+bool isValidId(Platform& platform, unsigned int id){
   bool idCorrecta = true;
 
   // Si el identificador es vacío o no existe, mostramos un error y volvemos al menú principal
-  for (int i = 0; i < platform.subscribers.size(); i++) {
+  for (unsigned int i = 0; i < platform.subscribers.size(); i++) {
     if (platform.subscribers[i].id == id) {
       idCorrecta = false;
     }
@@ -208,7 +209,7 @@ void addSubscriberIp(Platform& platform) {
     platform.subscribers[id-1].ips.push_back(ip);
 
     // a almacenamos en el campo mainIp del suscriptor
-    platform.subscribers[id].mainIp = ip;
+    platform.subscribers[id-1].mainIp = ip;
 
     break;
   }
@@ -224,7 +225,6 @@ void deleteSubscriber(Platform &platform) {
   cin.ignore();
 
   if(isValidId(platform, id)){
-    cout << "pito";
     platform.subscribers.erase(platform.subscribers.begin()+id-1);
   }
 }
@@ -233,6 +233,45 @@ void importFromCsv(Platform &platform) {
 }
 
 void exportToCsv(const Platform &platform) {
+  ofstream ficheroEsc;
+  string fileName,allIP;
+
+  cout << "Enter filename: ";
+  getline(cin,fileName);
+
+  ficheroEsc.open(fileName,ios::out); //abro y si existe lo machaca
+
+  if (ficheroEsc.is_open()){ //compruebo que se puede abrir
+    
+    int numSubscriber=(int)platform.subscribers.size();
+    
+    /*guardo en cada linea de fichero un libro con la estructura pedida*/
+    for (int a=0;a<numSubscriber;a++){
+      for(unsigned int i=0; i<platform.subscribers[a].ips.size();i++){
+        allIP += platform.subscribers[a].ips[i] + "|";
+      }
+
+      //borro la "|" de la ultima ip
+      if(allIP.size()>0){
+        allIP.erase(allIP.size() - 1, 1); 
+      }
+      
+
+
+      ficheroEsc <<  platform.subscribers[a].name << DOSPUNTOS
+      << platform.subscribers[a].email << DOSPUNTOS
+      << platform.subscribers[a].mainIp << DOSPUNTOS
+      << allIP<<endl;
+
+      //vacio las ips
+      allIP.clear();
+    }
+
+    ficheroEsc.close(); //cierro el fichero
+  }
+  else{
+    error(ERR_FILE);
+  }
 }
 
 void loadData(Platform &platform) {
@@ -242,7 +281,7 @@ void saveData(const Platform &platform) {
 }
 void showImportMenu(){
   cout << "[Import/export options]" << endl
-       <<"1- Import from CSV <<endl"<< endl
+       <<"1- Import from CSV"<< endl
        <<"2- Export to CSV"<<endl
        <<"3- Load data"<<endl
        <<"4- Save data"<<endl
