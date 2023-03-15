@@ -88,7 +88,6 @@ void showMainMenu() {
 }
 
 void showSubscribers(const Platform &platform) {
-  cout << "Subscribers:" << endl;
   for (const auto &subscriber : platform.subscribers) {
     cout << subscriber.id << ":" << subscriber.name << ":" << subscriber.email << ":" << subscriber.mainIp << ":";
     for (const auto &ip : subscriber.ips) {
@@ -112,7 +111,7 @@ void addSubscriber(Platform& platform) {
     cout << "Enter name: ";
     getline(cin,name);
     if (!isValidName(name)) {
-      cout << "ERR_NAME" << endl;
+      error(ERR_NAME);
     }
   } while (!isValidName(name));
     
@@ -121,7 +120,7 @@ void addSubscriber(Platform& platform) {
     cout << "Enter email: ";
     cin >> email;
     if (!isValidEmail(email)) {
-      cout << "ERR_EMAIL" << endl;
+      error(ERR_EMAIL);
     }
   } while (!isValidEmail(email));
     
@@ -201,7 +200,7 @@ void addSubscriberIp(Platform& platform) {
 
     // Si la dirección es vacía o no es válida, mostramos un error y pedimos de nuevo la dirección
     if (ip.empty() || !isValidIp(ip)) {
-      cout << "ERR_IP" << endl;
+      error(ERR_IP);
       continue;
     }
 
@@ -229,8 +228,85 @@ void deleteSubscriber(Platform &platform) {
   }
 }
 
-void importFromCsv(Platform &platform) {
+void importCSV(Platform &platform, ifstream &ficheroCSV){
+  string subscriberImport;
+    
+      
+  do{//leo todas la lineas del ficero
+
+    while(getline(ficheroCSV,subscriberImport)){ 
+      Subscriber newSubscriberImport;
+
+      string name, email, ip1, ips;
+      stringstream ss(subscriberImport);
+
+      getline(ss, name, ':');
+      if (isValidName(name)) {
+        newSubscriberImport.name=name;
+
+        getline(ss, email, ':');
+        if(isValidEmail(email)){
+          newSubscriberImport.email=email;
+          
+          getline(ss, ip1, ':');
+          if(isValidIp(ip1)){
+            newSubscriberImport.mainIp=ip1;
+
+            string ipsImport;
+            while (getline(ss, ipsImport, '|')) {
+              if (isValidIp(ipsImport)) {
+                newSubscriberImport.ips.push_back(ipsImport);
+              }
+            }
+
+            newSubscriberImport.id = platform.nextId++;
+            platform.subscribers.push_back(newSubscriberImport);
+          }
+          else(ERR_IP);
+        }
+        else{
+          error(ERR_EMAIL);
+        }
+
+      }
+      else{
+        error(ERR_NAME);
+      }
+      
+      
+
+      
+      
+        
+
+    }
+      
+  }while(!ficheroCSV.eof()); //compruebo que ha llegado al final
+      
+
+  ficheroCSV.close(); //cierro el fichero
+  
 }
+
+void importFromCsv(Platform &platform) {
+  ifstream ficheroImport;
+  string fileName;
+
+  cout << "Enter filename: ";
+  getline(cin,fileName);
+
+  ficheroImport.open(fileName,ios::in);
+
+  if(ficheroImport.is_open()){
+    importCSV(platform, ficheroImport);
+  }
+
+  else{
+    error(ERR_FILE);
+  }
+}
+
+
 
 void exportToCsv(const Platform &platform) {
   ofstream ficheroEsc;
@@ -286,7 +362,7 @@ void showImportMenu(){
        <<"3- Load data"<<endl
        <<"4- Save data"<<endl
        <<"b- Back to main menu"<<endl
-       <<"Option:"<<endl;
+       <<"Option:";
 }
 
 void importExportMenu(Platform &platform) {
