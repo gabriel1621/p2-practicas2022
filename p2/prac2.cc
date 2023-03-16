@@ -11,7 +11,7 @@ using namespace std;
 const int KMAXSTRING = 50;
 const int KMAXIP = 16;
 const int MIN_NAME_LENGTH = 3;
-const regex EMAIL_REGEX(R"(^[^.\s][^@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)");
+const regex EMAIL_REGEX(R"(^[^.\s][^@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)"); //no apacer /
 const char DOSPUNTOS = ':';
 
 enum Error {
@@ -88,11 +88,20 @@ void showMainMenu() {
 }
 
 void showSubscribers(const Platform &platform) {
+  
   for (const auto &subscriber : platform.subscribers) {
+    string allIP;
     cout << subscriber.id << ":" << subscriber.name << ":" << subscriber.email << ":" << subscriber.mainIp << ":";
     for (const auto &ip : subscriber.ips) {
-      cout << ip << "|";
+      
+      allIP += ip + "|";
+      
     }
+    //borro la "|" de la ultima ip
+      if(allIP.size()>0){
+        allIP.erase(allIP.size() - 1, 1); 
+      }
+    cout << allIP;
     cout << endl;
   }
 }
@@ -273,11 +282,6 @@ void importCSV(Platform &platform, ifstream &ficheroCSV){
         error(ERR_NAME);
       }
       
-      
-
-      
-      
-        
 
     }
       
@@ -349,8 +353,74 @@ void exportToCsv(const Platform &platform) {
     error(ERR_FILE);
   }
 }
+void loadProces(Platform &platform, string fileName){
+ifstream ficheroBinLec;
 
+  ficheroBinLec.open(fileName,ios::in | ios::binary);//abro el fichero binario
+
+  if (ficheroBinLec.is_open()){//compruebo si se puede abrir
+
+    BinPlatform binPlatformLoad;
+    BinSubscriber binSubscriberLoad;
+    Subscriber subscriberLoad;
+        
+    platform.subscribers.clear();//limpio el vector
+
+    //asigno el nombre de la bookstore y el id
+    ficheroBinLec.read((char *)&binPlatformLoad, sizeof(BinPlatform));
+    platform.name=binPlatformLoad.name;
+    platform.nextId=(binPlatformLoad.nextId);
+        
+    //voy grabando los libros
+    while(ficheroBinLec.read((char *)&binSubscriberLoad, sizeof(BinSubscriber))){
+          
+      subscriberLoad.id=binSubscriberLoad.id; //id
+      subscriberLoad.name=binSubscriberLoad.name; //nombre
+
+
+      platform.subscribers.push_back(subscriberLoad);
+    } 
+        
+    ficheroBinLec.close();
+  }
+  else{
+    error(ERR_FILE);
+    
+  }
+}
 void loadData(Platform &platform) {
+  bool preguntaSeguridad=true;
+  char option;
+  string fileName;
+  do{
+    cout << "All data will be erased. Continue? [y/n]: ";
+    cin >> option;
+    cin.get();
+    if (option=='N'||option=='n'){
+      preguntaSeguridad=false;
+      
+    }
+    else if(option=='Y'||option=='y'){
+      preguntaSeguridad=false;
+      cout<< "Enter filename: ";
+      getline(cin,fileName);
+
+      ifstream ficheroBinLec;
+
+      ficheroBinLec.open(fileName,ios::in | ios::binary);//abro el fichero binario
+
+      if (ficheroBinLec.is_open()){
+        loadProces(platform,fileName);
+      }
+      else{
+        error(ERR_FILE);
+        
+      }
+    }
+
+    
+  }while (preguntaSeguridad==true);
+  
 }
 
 void saveData(const Platform &platform) {
