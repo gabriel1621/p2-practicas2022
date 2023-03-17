@@ -11,7 +11,7 @@ using namespace std;
 const int KMAXSTRING = 50;
 const int KMAXIP = 16;
 const int MIN_NAME_LENGTH = 3;
-const regex EMAIL_REGEX(R"(^[^.\s][^@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)"); //no apacer /
+const regex EMAIL_REGEX(R"(^[^./\s][^/@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)"); //no apacer /
 const char DOSPUNTOS = ':';
 
 enum Error {
@@ -223,7 +223,6 @@ void addSubscriberIp(Platform& platform) {
   }
 }
 
-
 void deleteSubscriber(Platform &platform) {
   int id=0;
   
@@ -239,8 +238,7 @@ void deleteSubscriber(Platform &platform) {
 
 void importCSV(Platform &platform, ifstream &ficheroCSV){
   string subscriberImport;
-    
-      
+       
   do{//leo todas la lineas del ficero
 
     while(getline(ficheroCSV,subscriberImport)){ 
@@ -271,25 +269,21 @@ void importCSV(Platform &platform, ifstream &ficheroCSV){
             newSubscriberImport.id = platform.nextId++;
             platform.subscribers.push_back(newSubscriberImport);
           }
-          else(ERR_IP);
-        }
+          else{
+            error(ERR_IP);
+          }
         else{
           error(ERR_EMAIL);
         }
-
       }
       else{
         error(ERR_NAME);
       }
-      
-
-    }
-      
+    }   
   }while(!ficheroCSV.eof()); //compruebo que ha llegado al final
-      
 
-  ficheroCSV.close(); //cierro el fichero
-  
+  ficheroCSV.close(); //cierro el fichero 
+}
 }
 
 void importFromCsv(Platform &platform) {
@@ -309,8 +303,6 @@ void importFromCsv(Platform &platform) {
     error(ERR_FILE);
   }
 }
-
-
 
 void exportToCsv(const Platform &platform) {
   ofstream ficheroEsc;
@@ -353,6 +345,7 @@ void exportToCsv(const Platform &platform) {
     error(ERR_FILE);
   }
 }
+
 void loadProces(Platform &platform, string fileName){
 ifstream ficheroBinLec;
 
@@ -366,7 +359,7 @@ ifstream ficheroBinLec;
         
     platform.subscribers.clear();//limpio el vector
 
-    //asigno el nombre de la bookstore y el id
+    //asigno el nombre de la plataforma y el id
     ficheroBinLec.read((char *)&binPlatformLoad, sizeof(BinPlatform));
     platform.name=binPlatformLoad.name;
     platform.nextId=(binPlatformLoad.nextId);
@@ -376,6 +369,8 @@ ifstream ficheroBinLec;
           
       subscriberLoad.id=binSubscriberLoad.id; //id
       subscriberLoad.name=binSubscriberLoad.name; //nombre
+      subscriberLoad.email=binSubscriberLoad.email;
+      subscriberLoad.mainIp=binSubscriberLoad.mainIp;
 
 
       platform.subscribers.push_back(subscriberLoad);
@@ -388,6 +383,7 @@ ifstream ficheroBinLec;
     
   }
 }
+
 void loadData(Platform &platform) {
   bool preguntaSeguridad=true;
   char option;
@@ -414,16 +410,26 @@ void loadData(Platform &platform) {
       }
       else{
         error(ERR_FILE);
-        
       }
     }
-
-    
   }while (preguntaSeguridad==true);
-  
+}
+
+void stringToChar(string name, char nameConvert[]){
+ //convieto el string en char recortandolo has la constante-1 
+  strncpy(nameConvert, name.c_str(), KMAXSTRING-1);
+ //asigno en la ultima posicion el caracter '\0' 
+  nameConvert[KMAXSTRING-1]='\0';
+
 }
 
 void saveData(const Platform &platform) {
+  string fileName;//le asigno un tamaño ya que tiene que ser un char con tamaño constante
+  ofstream ficherBinGuardar;
+
+  cout << "NAMEFILE";
+  cin >> fileName;
+  getline(cin,fileName);
 }
 void showImportMenu(){
   cout << "[Import/export options]" << endl
