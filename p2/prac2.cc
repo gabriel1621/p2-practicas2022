@@ -272,6 +272,7 @@ void importCSV(Platform &platform, ifstream &ficheroCSV){
           else{
             error(ERR_IP);
           }
+        }
         else{
           error(ERR_EMAIL);
         }
@@ -284,7 +285,7 @@ void importCSV(Platform &platform, ifstream &ficheroCSV){
 
   ficheroCSV.close(); //cierro el fichero 
 }
-}
+
 
 void importFromCsv(Platform &platform) {
   ifstream ficheroImport;
@@ -363,17 +364,18 @@ ifstream ficheroBinLec;
     ficheroBinLec.read((char *)&binPlatformLoad, sizeof(BinPlatform));
     platform.name=binPlatformLoad.name;
     platform.nextId=(binPlatformLoad.nextId);
-        
+          
     //voy grabando los libros
     while(ficheroBinLec.read((char *)&binSubscriberLoad, sizeof(BinSubscriber))){
           
-      subscriberLoad.id=binSubscriberLoad.id; //id
+      subscriberLoad.id=binSubscriberLoad.id;
       subscriberLoad.name=binSubscriberLoad.name; //nombre
       subscriberLoad.email=binSubscriberLoad.email;
       subscriberLoad.mainIp=binSubscriberLoad.mainIp;
 
-
       platform.subscribers.push_back(subscriberLoad);
+      platform.subscribers[binSubscriberLoad.id-1].ips.push_back(binSubscriberLoad.mainIp);
+      
     } 
         
     ficheroBinLec.close();
@@ -427,9 +429,43 @@ void saveData(const Platform &platform) {
   string fileName;//le asigno un tamaño ya que tiene que ser un char con tamaño constante
   ofstream ficherBinGuardar;
 
-  cout << "NAMEFILE";
+  cout << "Enter filename: ";
   cin >> fileName;
   getline(cin,fileName);
+
+  ficherBinGuardar.open(fileName,ios::out | ios::binary); //abro el fichero
+
+  if (ficherBinGuardar.is_open()){
+    
+    BinPlatform binplatformSave;
+
+    binplatformSave.nextId=platform.nextId;
+    //ayudandome de la funcion paso el nombre de la platform a char
+    stringToChar(platform.name,binplatformSave.name);
+    
+    //alamaceno el nombre de la book store y el id
+    ficherBinGuardar.write((const char *)&binplatformSave, sizeof(BinPlatform));
+    
+    //alaceno libro por libro con el bucle
+    for (int unsigned i=0;i<platform.subscribers.size();i++){
+      BinSubscriber binsubscriberSave;
+
+      binsubscriberSave.id=platform.subscribers[i].id; //id
+      stringToChar(platform.subscribers[i].name,binsubscriberSave.name); //char titulo
+      stringToChar(platform.subscribers[i].email,binsubscriberSave.email); //char autor
+      stringToChar(platform.subscribers[i].mainIp,binsubscriberSave.mainIp); //char slug
+      
+
+      ficherBinGuardar.write((const char *)&binsubscriberSave, sizeof(BinSubscriber));
+     
+
+    }
+
+    ficherBinGuardar.close();
+
+  }else{
+    error(ERR_FILE);
+  }
 }
 void showImportMenu(){
   cout << "[Import/export options]" << endl
