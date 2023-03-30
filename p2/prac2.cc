@@ -481,6 +481,13 @@ void stringToChar(string name, char nameConvert[]){
   nameConvert[KMAXSTRING-1]='\0';
 
 }
+void stringToCharIP(string name, char nameConvert[]){
+ //convieto el string en char recortandolo has la constante-1 
+  strncpy(nameConvert, name.c_str(), KMAXIP-1);
+ //asigno en la ultima posicion el caracter '\0' 
+  nameConvert[KMAXIP-1]='\0';
+
+}
 
 void saveData(const Platform &platform) {
   string fileName;
@@ -516,12 +523,12 @@ void saveData(const Platform &platform) {
       binsubscriberSave.id=platform.subscribers[i].id; //id
       stringToChar(platform.subscribers[i].name,binsubscriberSave.name); 
       stringToChar(platform.subscribers[i].email,binsubscriberSave.email);
+      //cout<< platform.subscribers[i].mainIp;
+      stringToCharIP(platform.subscribers[i].mainIp, binsubscriberSave.mainIp);
+
       
-      if (!platform.subscribers[i].mainIp.empty()) {
-        stringToChar(platform.subscribers[i].mainIp, binsubscriberSave.mainIp);
-      } else {
-        binsubscriberSave.mainIp[0] = '\0'; // establecer el primer carácter como nulo para indicar una cadena vacía
-      }
+
+      
       ficherBinGuardar.write((const char *)&binsubscriberSave, sizeof(BinSubscriber));
   
     }
