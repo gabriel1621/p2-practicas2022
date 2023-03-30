@@ -11,8 +11,8 @@ using namespace std;
 const int KMAXSTRING = 50;
 const int KMAXIP = 16;
 const int MIN_NAME_LENGTH = 3;
-const regex EMAIL_REGEX(R"(^[^./\s][^/@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)"); //no apacer /
 const char DOSPUNTOS = ':';
+const regex EMAIL_REGEX(R"(^[^./\s][^/@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)"); //no apacer /
 
 enum Error {
   ERR_OPTION,
@@ -111,7 +111,28 @@ bool isValidName(const string& name) {
 }
 
 bool isValidEmail(const string& email) {
-  return regex_match(email, EMAIL_REGEX);
+   regex regexEmail("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    // Validar que el email tenga un único @ y que no comience ni termine con un punto
+    if (count(email.begin(), email.end(), '@') != 1 || email.front() == '.' || email.back() == '.') {
+        return false;
+    }
+    // Dividir el email en usuario y dominio
+    string usuario = email.substr(0, email.find('@'));
+    string dominio = email.substr(email.find('@') + 1);
+    // Validar que las partes izquierda y derecha no sean cadenas vacías y que no comiencen ni terminen con un punto
+    if (usuario.empty() || dominio.empty() || usuario.front() == '.' || usuario.back() == '.' || dominio.front() == '.' || dominio.back() == '.') {
+        return false;
+    }
+    // Validar que las partes izquierda y derecha sólo contengan caracteres válidos
+    if (!regex_match(usuario, regex("^[a-zA-Z0-9._%+-]+$")) || !regex_match(dominio, regex("^[a-zA-Z0-9._%+-]+$"))) {
+        return false;
+    }
+    // Validar que la parte derecha contenga al menos un punto
+    if (count(dominio.begin(), dominio.end(), '.') < 1) {
+        return false;
+    }
+    return regex_match(email, regexEmail); // Validar el formato del email completo
+
 }
 
 void addSubscriber(Platform& platform) {
@@ -181,7 +202,9 @@ bool isValidId(Platform& platform, unsigned int id){
   }
 
   if (idCorrecta) {
-    error(ERR_ID);
+    return false;
+  }
+  else if(id==0){
     return false;
   }
   else{
@@ -191,48 +214,82 @@ bool isValidId(Platform& platform, unsigned int id){
 }
 
 void addSubscriberIp(Platform& platform) {
-  string ip;
-  int id=0;
-  do{
-    // Pedimos el identificador del suscriptor
-    cout << "Enter subscriber id: ";
-    cin >> id;
-    cin.ignore();
-
-  }while(!isValidId(platform, id));
-
-
-  // Pedimos la dirección IP a añadir
-  while (true) {
-    cout << "Enter IP: ";
-    getline(cin, ip);
-
-    // Si la dirección es vacía o no es válida, mostramos un error y pedimos de nuevo la dirección
-    if (ip.empty() || !isValidIp(ip)) {
-      error(ERR_IP);
-      continue;
-    }
-
-    // Añadimos la dirección IP al vector de direcciones del suscriptor
-    platform.subscribers[id-1].ips.push_back(ip);
-
-    // a almacenamos en el campo mainIp del suscriptor
-    platform.subscribers[id-1].mainIp = ip;
-
-    break;
-  }
-}
-
-void deleteSubscriber(Platform &platform) {
-  int id=0;
+  string ip, input;
+  int id = 0;
   
   // Pedimos el identificador del suscriptor
   cout << "Enter subscriber id: ";
-  cin >> id;
-  cin.ignore();
+  if (!getline(cin, input) || input.empty()) {
+    error(ERR_ID);
+    return;
+  }
+  id = stoi(input);
 
   if(isValidId(platform, id)){
-    platform.subscribers.erase(platform.subscribers.begin()+id-1);
+    while (true) {
+      cout << "Enter IP: ";
+      getline(cin, ip);
+
+      // Si la dirección es vacía o no es válida, mostramos un error y pedimos de nuevo la dirección
+      if (ip.empty() || !isValidIp(ip)) {
+        error(ERR_IP);
+        continue;
+      }
+
+      // Añadimos la dirección IP al vector de direcciones del suscriptor
+      platform.subscribers[id-1].ips.push_back(ip);
+
+      // Determinamos la mainIp del suscriptor como la que más se repite en el vector de direcciones
+      int maxCount = 0;
+      string mainIp = "";
+      for (const auto& addr : platform.subscribers[id-1].ips) {
+        int count = count_if(platform.subscribers[id-1].ips.begin(), platform.subscribers[id-1].ips.end(), 
+            [&](const string& other){ return other == addr; });
+        if (count > maxCount || (count == maxCount && addr < mainIp)) {
+          maxCount = count;
+          mainIp = addr;
+        }
+      }
+      platform.subscribers[id-1].mainIp = mainIp;;
+
+      break;
+    }
+
+  }
+  else{
+    error(ERR_ID);
+  }
+  
+  
+}
+
+void deleteSubscriber(Platform &platform) {
+  unsigned int id=0;
+  string input;
+  
+  // Pedimos el identificador del suscriptor
+  cout << "Enter subscriber id: ";
+  if (!getline(cin, input) || input.empty()) {
+    error(ERR_ID);
+    return;
+  }
+  id = stoi(input);
+
+  if(isValidId(platform, id)){
+    /*recorro el vector para buscar coincidencias y saber
+    si el id exist*/
+    for(int h=0; h<(int)platform.subscribers.size();h++){
+      if (platform.subscribers[h].id==id){
+        id = h;
+      }
+    }
+    
+ 
+    platform.subscribers.erase(platform.subscribers.begin() +id);
+    
+  }
+  else{
+    error(ERR_ID);
   }
 }
 
@@ -348,7 +405,7 @@ void exportToCsv(const Platform &platform) {
 }
 
 void loadProces(Platform &platform, string fileName){
-ifstream ficheroBinLec;
+  ifstream ficheroBinLec;
 
   ficheroBinLec.open(fileName,ios::in | ios::binary);//abro el fichero binario
 
@@ -426,12 +483,18 @@ void stringToChar(string name, char nameConvert[]){
 }
 
 void saveData(const Platform &platform) {
-  string fileName;//le asigno un tamaño ya que tiene que ser un char con tamaño constante
+  string fileName;
+  ofstream ficherBinGuardar;
+
+  cout << "Enter filename: ";
+  getline(cin,fileName);
+
+  /*char fileName[90];//le asigno un tamaño ya que tiene que ser un char con tamaño constante
   ofstream ficherBinGuardar;
 
   cout << "Enter filename: ";
   cin >> fileName;
-  getline(cin,fileName);
+  cin.get();*/
 
   ficherBinGuardar.open(fileName,ios::out | ios::binary); //abro el fichero
 
@@ -451,19 +514,22 @@ void saveData(const Platform &platform) {
       BinSubscriber binsubscriberSave;
 
       binsubscriberSave.id=platform.subscribers[i].id; //id
-      stringToChar(platform.subscribers[i].name,binsubscriberSave.name); //char titulo
-      stringToChar(platform.subscribers[i].email,binsubscriberSave.email); //char autor
-      stringToChar(platform.subscribers[i].mainIp,binsubscriberSave.mainIp); //char slug
+      stringToChar(platform.subscribers[i].name,binsubscriberSave.name); 
+      stringToChar(platform.subscribers[i].email,binsubscriberSave.email);
       
-
+      if (!platform.subscribers[i].mainIp.empty()) {
+        stringToChar(platform.subscribers[i].mainIp, binsubscriberSave.mainIp);
+      } else {
+        binsubscriberSave.mainIp[0] = '\0'; // establecer el primer carácter como nulo para indicar una cadena vacía
+      }
       ficherBinGuardar.write((const char *)&binsubscriberSave, sizeof(BinSubscriber));
-     
-
+  
     }
 
     ficherBinGuardar.close();
 
-  }else{
+  }
+  else{
     error(ERR_FILE);
   }
 }
@@ -474,7 +540,7 @@ void showImportMenu(){
        <<"3- Load data"<<endl
        <<"4- Save data"<<endl
        <<"b- Back to main menu"<<endl
-       <<"Option:";
+       <<"Option: ";
 }
 
 void importExportMenu(Platform &platform) {
@@ -504,40 +570,148 @@ void importExportMenu(Platform &platform) {
     }
   } while (option != 'b');
 }
+//Módulo donde a través de los argumentos introducidos importaré un archivo binario.
+void loadArgument(Platform &platform, string argument, int &cont){
+  ifstream ficheroLoad;
+  string fileName=argument;
 
+  //strcpy(fileName, argument.c_str());
+
+  ficheroLoad.open(fileName,ios::in | ios::binary);
+  
+  if(ficheroLoad.is_open()){
+    loadProces(platform, fileName); // Recurro a una función creada antes para procesar los datos.
+  }
+
+  else{
+    error(ERR_FILE);
+    cont++;
+  }
+}
+
+//Módulo donde a través de los argumentos introducidos importaré un archivo de texto.
+void importArgument(Platform &platform, string argument, int &cont){
+  ifstream ficheroImport;
+  string fileName=argument;
+
+  //strcpy(fileName, argument.c_str());
+
+  ficheroImport.open(fileName,ios::in);
+  
+  if(ficheroImport.is_open()){
+    importCSV(platform, ficheroImport); // Recurro a una función creada antes para procesar los datos.
+  }
+  
+  else{
+    error(ERR_FILE);
+    cont++;
+  }
+}
+
+//Módulo donde se va a comprobar si la forma en la que se han introducido los argumentos es la correcta.
+void veracityArgument(vector<string> argument, int argc, int &cont){
+
+  if((argc==3)||(argc==5)){
+    if((argument[0]=="-i")||(argument[0]=="-l")){
+      if(argc==5){
+        if((argument[2]=="-i")||(argument[2]=="-l")){
+          if(argument[0]==argument[2]){
+            cont++;
+          }
+        }
+        else{
+          cont++;
+        }
+      }
+    }
+    else{
+      cont++;
+    }
+  }
+  else{
+    cont++;
+  }
+}
+//Módulo donde voy a procesar los distintos argumentos.
+void programArgument(Platform &platform, int argc, char *argv[], int &cont){
+  vector<string> argument; //Vector que uso para guardarme los argumentos que hay en argv.
+  int binary=0, text=0; //Los inicio a 0 por que jamas van a guardar un numero que no sea 1 o 3 y no puedo dejarlos sin inicializar.
+
+  for(int i=1; i<argc; i++){// Me guardo los argumentos.
+    argument.push_back(argv[i]);
+  }
+
+  veracityArgument(argument, argc, cont);// Verifico si los argumentos son correctos.
+
+  if(cont!=0){
+    error(ERR_ARGS);
+  }
+
+  else{
+
+    //Teniendo en cuenta que aqui solo se va entrar si los argumentos son correctos.
+    /*Con este bucle y sabiendo las posiciones de los argumentos -i y -l 
+    me guardo la posición donde estarán escritos los archivos. */
+    for(int i=0; i<(int)argument.size(); i++){
+      if((argument[i]=="-l")&&((i==0)||(i==2))){
+        binary=i+1;
+      }
+
+      else if((argument[i]=="-i")&&((i==0)||(i==2))){
+        text=i+1;
+      }
+    }
+    //Si hay algun "-l", binary no valdra 0 y se activara. 
+    if(binary!=0){
+      loadArgument(platform, argument[binary], cont);
+    }
+
+    /*Uso la misma forma que para acceder al loadArgument, pero le añado lo del contador, ya que si el anterior da ERR_FILE 
+    no se volverá al menu principal y se cerrará el progrma, por lo que es innecesario buscar el otro archivo */
+    if((text!=0)&&(cont==0)){
+      importArgument(platform, argument[text], cont);
+    }
+  }
+}
 int main(int argc, char *argv[]) {
   Platform platform;
   platform.name = "Streamflix";
   platform.nextId = 1;
 
   char option;
-  do {
-    showMainMenu();
-    cin >> option;
-    cin.get();
+  int cont=0;
 
-    switch (option) {
-      case '1':
-        showSubscribers(platform);
-        break;
-      case '2':
-        addSubscriber(platform);
-        break;
-      case '3':
-        addSubscriberIp(platform);
-        break;
-      case '4':
-        deleteSubscriber(platform);
-        break;
-      case '5':
-        importExportMenu(platform);
-        break;
-      case 'q':
-        break;
-      default:
-        error(ERR_OPTION);
-    }
-  } while (option != 'q');
+  if(argc>1){
+    programArgument(platform, argc, argv, cont);
+  }
+  if((argc==1)||(cont==0)){
+    do {
+      showMainMenu();
+      cin >> option;
+      cin.get();
 
+      switch (option) {
+        case '1':
+          showSubscribers(platform);
+          break;
+        case '2':
+          addSubscriber(platform);
+          break;
+        case '3':
+          addSubscriberIp(platform);
+          break;
+        case '4':
+          deleteSubscriber(platform);
+          break;
+        case '5':
+          importExportMenu(platform);
+          break;
+        case 'q':
+          break;
+        default:
+          error(ERR_OPTION);
+      }
+    } while (option != 'q');
+  }
   return 0;
 }
