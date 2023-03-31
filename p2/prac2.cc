@@ -12,7 +12,6 @@ const int KMAXSTRING = 50;
 const int KMAXIP = 16;
 const int MIN_NAME_LENGTH = 3;
 const char DOSPUNTOS = ':';
-const regex EMAIL_REGEX(R"(^[^./\s][^/@\s]*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$)"); //no apacer /
 
 enum Error {
   ERR_OPTION,
@@ -75,7 +74,7 @@ void error(Error e) {
       break;
   }
 }
-
+/*Funcion que imprime el menu de opciones*/
 void showMainMenu() {
   cout << "[Options]" << endl
        << "1- Show subscribers" << endl
@@ -86,30 +85,30 @@ void showMainMenu() {
        << "q- Quit" << endl
        << "Option: ";
 }
-
+/*Muestra el listado con la infomacion de los subcriptores*/
 void showSubscribers(const Platform &platform) {
-  
   for (const auto &subscriber : platform.subscribers) {
     string allIP;
     cout << subscriber.id << ":" << subscriber.name << ":" << subscriber.email << ":" << subscriber.mainIp << ":";
+    //Creo un solo string con todas las ips
     for (const auto &ip : subscriber.ips) {
-      
       allIP += ip + "|";
-      
     }
     //borro la "|" de la ultima ip
-      if(allIP.size()>0){
-        allIP.erase(allIP.size() - 1, 1); 
-      }
+    if(allIP.size()>0){
+      allIP.erase(allIP.size() - 1, 1); 
+    }
     cout << allIP;
     cout << endl;
   }
 }
-
+/*Funcion que comprueba la validez del nombre*/
 bool isValidName(const string& name) {
+  /* La condición name.find(':') == string::npos verifica si el carácter ':' no está presente 
+  en la cadena name devuelve string::npos, que es un valor especial que representa "no encontrado"*/
   return name.size() >= MIN_NAME_LENGTH && name.find(':') == string::npos;
 }
-
+/*Funcion que comprueba la validez del mail*/
 bool isValidEmail(const string& email) {
    regex regexEmail("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     // Validar que el email tenga un único @ y que no comience ni termine con un punto
@@ -134,8 +133,9 @@ bool isValidEmail(const string& email) {
     return regex_match(email, regexEmail); // Validar el formato del email completo
 
 }
-
+/*Esta opción permite añadir un suscriptor nuevo al programa*/
 void addSubscriber(Platform& platform) {
+  //Introduzco el nombre y compruebo que sea correcto
   string name;
   do {
     cout << "Enter name: ";
@@ -144,7 +144,8 @@ void addSubscriber(Platform& platform) {
       error(ERR_NAME);
     }
   } while (!isValidName(name));
-    
+
+  //Introduzco el nombre y compruebo que sea correcto 
   string email;
   do {
     cout << "Enter email: ";
@@ -154,24 +155,24 @@ void addSubscriber(Platform& platform) {
     }
   } while (!isValidEmail(email));
     
-  // Create new subscriber
+  //Creo el nuevo subscriptor
   Subscriber newSubscriber;
   newSubscriber.id = platform.nextId++;
   newSubscriber.name = name;
   newSubscriber.email = email;
     
-  // Add new subscriber to platform
+  //Lo añado al vector de la plataforma
   platform.subscribers.push_back(newSubscriber);
     
-  
 }
-
+/*Funcion que comprueba la validez de la ip*/
 bool isValidIp(string ip) {
+  /*Compruebo la ip numero por numero usando de separador los puntos*/
   vector<string> parts;
   string part;
   stringstream ss(ip);
 
-  // Separo por puntos
+  // Separo por puntos almacenado en el vector cada agrupacion de numeros
   while (getline(ss, part, '.')) {
     parts.push_back(part);
   }
@@ -181,7 +182,7 @@ bool isValidIp(string ip) {
     return false;
   }
 
-  // Compruebo que estente entre los valores correctos
+  // Convierto a enteros y compruebo que estente entre los valores correctos
   for (string part : parts) {
     int value = stoi(part);
     if (value < 0 || value > 255) {
@@ -190,7 +191,7 @@ bool isValidIp(string ip) {
   }
   return true;
 }
-
+/*Funcion que comprueba la validez de la id*/
 bool isValidId(Platform& platform, unsigned int id){
   bool idCorrecta = true;
 
@@ -200,7 +201,6 @@ bool isValidId(Platform& platform, unsigned int id){
       idCorrecta = false;
     }
   }
-
   if (idCorrecta) {
     return false;
   }
@@ -210,21 +210,20 @@ bool isValidId(Platform& platform, unsigned int id){
   else{
     return true;
   }
-
 }
-
+/*Funcio permite añadir una dirección IP de un dispositivo que pertenezca a un suscriptor*/
 void addSubscriberIp(Platform& platform) {
-  string ip, input;
+  string ip, idString;
   int id = 0;
   
   // Pedimos el identificador del suscriptor
   cout << "Enter subscriber id: ";
-  if (!getline(cin, input) || input.empty()) {
+  if (!getline(cin, idString) || idString.empty()) {
     error(ERR_ID);
     return;
   }
-  id = stoi(input);
-
+  id = stoi(idString);
+  //pedimos la direccion ip
   if(isValidId(platform, id)){
     while (true) {
       cout << "Enter IP: ";
@@ -242,57 +241,55 @@ void addSubscriberIp(Platform& platform) {
       // Determinamos la mainIp del suscriptor como la que más se repite en el vector de direcciones
       int maxCount = 0;
       string mainIp = "";
-      for (const auto& addr : platform.subscribers[id-1].ips) {
+      /*se utiliza la función count_if para contar el número de veces que aparece cada dirección IP en la lista. 
+      se utiliza otraIP como referencia constante a una cadena de ips 
+      y verifica si es igual a la dirección IP actual.*/
+
+      for (const auto& ipActual : platform.subscribers[id-1].ips) {
         int count = count_if(platform.subscribers[id-1].ips.begin(), platform.subscribers[id-1].ips.end(), 
-            [&](const string& other){ return other == addr; });
-        if (count > maxCount || (count == maxCount && addr < mainIp)) {
+            [&](const string& otraIP){ return otraIP == ipActual; });
+
+        if (count > maxCount || (count == maxCount && ipActual < mainIp)) {
           maxCount = count;
-          mainIp = addr;
+          mainIp = ipActual;
         }
       }
       platform.subscribers[id-1].mainIp = mainIp;;
 
       break;
     }
-
   }
   else{
     error(ERR_ID);
   }
-  
-  
 }
-
+/*Funcion que permite borrar un suscriptor existente en la plataforma*/
 void deleteSubscriber(Platform &platform) {
   unsigned int id=0;
-  string input;
+  string idString;
   
   // Pedimos el identificador del suscriptor
   cout << "Enter subscriber id: ";
-  if (!getline(cin, input) || input.empty()) {
+  if (!getline(cin, idString) || idString.empty()) {
     error(ERR_ID);
     return;
   }
-  id = stoi(input);
+  id = stoi(idString);
 
   if(isValidId(platform, id)){
-    /*recorro el vector para buscar coincidencias y saber
-    si el id exist*/
+    /*recorro el vector para buscar la poscion correcta*/
     for(int h=0; h<(int)platform.subscribers.size();h++){
       if (platform.subscribers[h].id==id){
         id = h;
       }
     }
-    
- 
     platform.subscribers.erase(platform.subscribers.begin() +id);
-    
   }
   else{
     error(ERR_ID);
   }
 }
-
+/*Funcion proceso de importacion fichero de texto usando los : como separador*/
 void importCSV(Platform &platform, ifstream &ficheroCSV){
   string subscriberImport;
        
@@ -305,15 +302,15 @@ void importCSV(Platform &platform, ifstream &ficheroCSV){
       stringstream ss(subscriberImport);
 
       getline(ss, name, ':');
-      if (isValidName(name)) {
+      if (isValidName(name)) { //compruebo el nombre
         newSubscriberImport.name=name;
 
         getline(ss, email, ':');
-        if(isValidEmail(email)){
+        if(isValidEmail(email)){ //compruebo el mail
           newSubscriberImport.email=email;
           
           getline(ss, ip1, ':');
-          if(isValidIp(ip1)){
+          if(isValidIp(ip1)){ //compruebo ips
             newSubscriberImport.mainIp=ip1;
 
             string ipsImport;
@@ -342,8 +339,7 @@ void importCSV(Platform &platform, ifstream &ficheroCSV){
 
   ficheroCSV.close(); //cierro el fichero 
 }
-
-
+/*Funcion permite importar información de suscriptores almacenados en un fichero de texto*/
 void importFromCsv(Platform &platform) {
   ifstream ficheroImport;
   string fileName;
@@ -352,7 +348,7 @@ void importFromCsv(Platform &platform) {
   getline(cin,fileName);
 
   ficheroImport.open(fileName,ios::in);
-
+  //si puedo abrir el fichero llamo a la funcion para iniciar el preceso
   if(ficheroImport.is_open()){
     importCSV(platform, ficheroImport);
   }
@@ -361,7 +357,7 @@ void importFromCsv(Platform &platform) {
     error(ERR_FILE);
   }
 }
-
+/*Funcion que guarda en un fichero de texto*/
 void exportToCsv(const Platform &platform) {
   ofstream ficheroEsc;
   string fileName,allIP;
@@ -386,8 +382,6 @@ void exportToCsv(const Platform &platform) {
         allIP.erase(allIP.size() - 1, 1); 
       }
       
-
-
       ficheroEsc <<  platform.subscribers[a].name << DOSPUNTOS
       << platform.subscribers[a].email << DOSPUNTOS
       << platform.subscribers[a].mainIp << DOSPUNTOS
@@ -396,14 +390,13 @@ void exportToCsv(const Platform &platform) {
       //vacio las ips
       allIP.clear();
     }
-
     ficheroEsc.close(); //cierro el fichero
   }
   else{
     error(ERR_FILE);
   }
 }
-
+/*Funcion proceso de importacion fichero binario*/
 void loadProces(Platform &platform, string fileName){
   ifstream ficheroBinLec;
 
@@ -442,7 +435,7 @@ void loadProces(Platform &platform, string fileName){
     
   }
 }
-
+/*Funcion permite importar información de suscriptores almacenados en un fichero binario*/
 void loadData(Platform &platform) {
   bool preguntaSeguridad=true;
   char option;
@@ -488,20 +481,13 @@ void stringToCharIP(string name, char nameConvert[]){
   nameConvert[KMAXIP-1]='\0';
 
 }
-
+/*Funcion que guarda en un fichero binario*/
 void saveData(const Platform &platform) {
   string fileName;
   ofstream ficherBinGuardar;
 
   cout << "Enter filename: ";
   getline(cin,fileName);
-
-  /*char fileName[90];//le asigno un tamaño ya que tiene que ser un char con tamaño constante
-  ofstream ficherBinGuardar;
-
-  cout << "Enter filename: ";
-  cin >> fileName;
-  cin.get();*/
 
   ficherBinGuardar.open(fileName,ios::out | ios::binary); //abro el fichero
 
@@ -513,33 +499,29 @@ void saveData(const Platform &platform) {
     //ayudandome de la funcion paso el nombre de la platform a char
     stringToChar(platform.name,binplatformSave.name);
     
-    //alamaceno el nombre de la book store y el id
+    //almaceno el nombre de la platform y el id
     ficherBinGuardar.write((const char *)&binplatformSave, sizeof(BinPlatform));
     
-    //alaceno libro por libro con el bucle
+    //almaceno subscribtor
     for (int unsigned i=0;i<platform.subscribers.size();i++){
       BinSubscriber binsubscriberSave;
 
       binsubscriberSave.id=platform.subscribers[i].id; //id
       stringToChar(platform.subscribers[i].name,binsubscriberSave.name); 
       stringToChar(platform.subscribers[i].email,binsubscriberSave.email);
-      //cout<< platform.subscribers[i].mainIp;
       stringToCharIP(platform.subscribers[i].mainIp, binsubscriberSave.mainIp);
 
-      
-
-      
       ficherBinGuardar.write((const char *)&binsubscriberSave, sizeof(BinSubscriber));
   
     }
 
     ficherBinGuardar.close();
-
   }
   else{
     error(ERR_FILE);
   }
 }
+/*Funcion que imprime el menu de manejo de ficheros*/
 void showImportMenu(){
   cout << "[Import/export options]" << endl
        <<"1- Import from CSV"<< endl
@@ -577,36 +559,31 @@ void importExportMenu(Platform &platform) {
     }
   } while (option != 'b');
 }
-//Módulo donde a través de los argumentos introducidos importaré un archivo binario.
+/*Importar un archivo binario por argumentos*/
 void loadArgument(Platform &platform, string argument, int &cont){
   ifstream ficheroLoad;
   string fileName=argument;
 
-  //strcpy(fileName, argument.c_str());
-
   ficheroLoad.open(fileName,ios::in | ios::binary);
   
   if(ficheroLoad.is_open()){
-    loadProces(platform, fileName); // Recurro a una función creada antes para procesar los datos.
+    loadProces(platform, fileName); //llamo al proceso de importacion binaria
   }
-
+  //contador para no mostra el menu en caso de exixtir un error
   else{
     error(ERR_FILE);
     cont++;
   }
 }
-
-//Módulo donde a través de los argumentos introducidos importaré un archivo de texto.
+/*Importar fichero de texto por argumento*/
 void importArgument(Platform &platform, string argument, int &cont){
   ifstream ficheroImport;
   string fileName=argument;
 
-  //strcpy(fileName, argument.c_str());
-
   ficheroImport.open(fileName,ios::in);
   
   if(ficheroImport.is_open()){
-    importCSV(platform, ficheroImport); // Recurro a una función creada antes para procesar los datos.
+    importCSV(platform, ficheroImport);
   }
   
   else{
@@ -615,12 +592,12 @@ void importArgument(Platform &platform, string argument, int &cont){
   }
 }
 
-//Módulo donde se va a comprobar si la forma en la que se han introducido los argumentos es la correcta.
-void veracityArgument(vector<string> argument, int argc, int &cont){
+/*Funcion para verificar los argumentos*/
+void isValidArgument(vector<string> argument, int argc, int &cont){
 
-  if((argc==3)||(argc==5)){
+  if((argc==3)||(argc==5)){ //poscion correcta
     if((argument[0]=="-i")||(argument[0]=="-l")){
-      if(argc==5){
+      if(argc==5){//aqui solo entra si hay mas de un argumento
         if((argument[2]=="-i")||(argument[2]=="-l")){
           if(argument[0]==argument[2]){
             cont++;
@@ -639,26 +616,21 @@ void veracityArgument(vector<string> argument, int argc, int &cont){
     cont++;
   }
 }
-//Módulo donde voy a procesar los distintos argumentos.
+/*Funcion que tras comprobar los argumentos elije el orden de ejecucion*/
 void programArgument(Platform &platform, int argc, char *argv[], int &cont){
   vector<string> argument; //Vector que uso para guardarme los argumentos que hay en argv.
-  int binary=0, text=0; //Los inicio a 0 por que jamas van a guardar un numero que no sea 1 o 3 y no puedo dejarlos sin inicializar.
+  int binary=0, text=0;
 
-  for(int i=1; i<argc; i++){// Me guardo los argumentos.
+  for(int i=1; i<argc; i++){
     argument.push_back(argv[i]);
   }
 
-  veracityArgument(argument, argc, cont);// Verifico si los argumentos son correctos.
-
+  isValidArgument(argument, argc, cont);// Verifico si los argumentos son correctos.
+  /*Con se aumenta en el caso de que exista un error en los argumentos*/
   if(cont!=0){
     error(ERR_ARGS);
   }
-
   else{
-
-    //Teniendo en cuenta que aqui solo se va entrar si los argumentos son correctos.
-    /*Con este bucle y sabiendo las posiciones de los argumentos -i y -l 
-    me guardo la posición donde estarán escritos los archivos. */
     for(int i=0; i<(int)argument.size(); i++){
       if((argument[i]=="-l")&&((i==0)||(i==2))){
         binary=i+1;
@@ -673,8 +645,7 @@ void programArgument(Platform &platform, int argc, char *argv[], int &cont){
       loadArgument(platform, argument[binary], cont);
     }
 
-    /*Uso la misma forma que para acceder al loadArgument, pero le añado lo del contador, ya que si el anterior da ERR_FILE 
-    no se volverá al menu principal y se cerrará el progrma, por lo que es innecesario buscar el otro archivo */
+    /*no se volverá al menu principal y se cerrará el programa*/
     if((text!=0)&&(cont==0)){
       importArgument(platform, argument[text], cont);
     }
