@@ -1,7 +1,8 @@
 //Gabriel Pardo - 48775081Q
 #ifndef _Player_h
 #define _Player_h
-
+#include <iostream>
+#include <vector>
 #include "Coordinate.h"
 #include "Ship.h"
 using namespace std;
