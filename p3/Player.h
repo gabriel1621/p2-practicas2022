@@ -12,6 +12,7 @@ class Player{
     protected:
         string name;
         vector<Ship> ships;
+        Coordinate board[10][10];
     public:
         Player(string name);
         string getName() const;

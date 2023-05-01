@@ -30,6 +30,8 @@ class Coordinate{
         int row;
         int column;
         CellState state;
+        vector<Coordinate*> positions;
+        
     public:
         Coordinate();
         Coordinate(int row, int column);

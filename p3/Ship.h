@@ -28,10 +28,10 @@ class Ship{
     protected:
         ShipState state;
         ShipType type;
-        vector<Coordinate*> positions;
-        Coordinate board[10][10];
+        vector <Coordinate*> positions;
+        vector<Ship> ships;
     public:
-        Ship(ShipType type,const vector<Coordinate *>&positions );
+        Ship(ShipType type,const vector<Coordinate *> &positions );
         static unsigned shipSize(ShipType type);
         static ShipType typeFromChar(char type);
         Coordinate *getPosition(unsigned pos) const;
