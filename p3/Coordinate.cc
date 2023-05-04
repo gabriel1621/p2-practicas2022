@@ -70,7 +70,7 @@ char Coordinate::getStateChar() const{
 void Coordinate::setRow(int row){
     this->row=row;
 }
-void Coordinate::setColun(int column){
+void Coordinate::setColumn(int column){
     this->column=column;
 }
 void Coordinate::setState(CellState state){

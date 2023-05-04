@@ -1,4 +1,5 @@
 //Gabriel Pardo - 48775081Q
+
 #ifndef _Ship_h
 #define _Ship_h
 
@@ -23,22 +24,22 @@ enum ShipState {
     SUNK
 };
 
-class Ship{
-    friend ostream& operator<<(ostream &os,const Ship &ship );
-    protected:
+class Ship {
+    private:
         ShipState state;
         ShipType type;
-        vector <Coordinate*> positions;
-        vector<Ship> ships;
+        std::vector<Coordinate*> positions;
     public:
-        Ship(ShipType type,const vector<Coordinate *> &positions );
+        Ship(ShipType type, const std::vector<Coordinate*>& positions);
         static unsigned shipSize(ShipType type);
         static ShipType typeFromChar(char type);
-        Coordinate *getPosition(unsigned pos) const;
+        Coordinate* getPosition(unsigned pos) const;
         ShipState getState() const;
         ShipType getType() const;
-        bool hit(const Coordinate &coord);
-
+        bool hit(const Coordinate& coord);
+        string getTypeName()const;
+        friend std::ostream& operator<<(std::ostream& os, const Ship& ship);
 };
 
-#endif
+#endif 
+

@@ -65,6 +65,7 @@ ShipType Ship::getType() const{
 Si la posición ya tenía el estado HIT, lanza la excepción EXCEPTION_ALREADY_HIT. Si el barco ya estaba hundido, lanza la excepción EXCEPTION_ALREADY_SUNK. En ambos casos, estas excepciones deben ser capturadas en la clase Player.
 
 Si ninguna de las posiciones del barco coincide con la coordenada, el método devuelve false. En caso contrario, devuelve true si el ataque ha sido un acierto (es decir, la posición estaba en estado SHIP) y no ha lanzado ninguna excepción.*/
+
 bool Ship::hit(const Coordinate &coord){
     bool hit = false;
     for (unsigned i = 0; i < positions.size(); i++) {
@@ -105,8 +106,8 @@ bool Ship::hit(const Coordinate &coord){
     return hit;
 }
 
-/*/
-string Ship::getTypeName() {
+
+string Ship::getTypeName() const{
     string typeName;
     switch (type) {
         case SUBMARINE:
@@ -126,10 +127,9 @@ string Ship::getTypeName() {
             break;
     }
     return typeName;
-}*/
-
+}
 ostream& operator<<(ostream& os, const Ship& ship) {
-  // os << ship.getTypeName() << " (";
+   os << ship.getTypeName() << " (";
     switch (ship.getState()) {
         case OK:
             os << "O";
@@ -143,6 +143,7 @@ ostream& operator<<(ostream& os, const Ship& ship) {
     }
     os << "): ";/*
     for (int i = 0; i < ship.shipSize(); i++) {
+        //almacenar el tipo en una funcion
         os << *ship.getPosition(i);
         if (i != ship.shipSize(type) - 1) {
             os << " ";

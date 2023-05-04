@@ -1,4 +1,5 @@
 //Gabriel Pardo - 48775081Q
+/*
 #ifndef _Player_h
 #define _Player_h
 #include <iostream>
@@ -24,3 +25,4 @@ class Player{
 };
 
 #endif
+*/
