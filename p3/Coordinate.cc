@@ -48,20 +48,19 @@ CellState Coordinate::getState() const{
 char Coordinate::getStateChar() const{
     char stateChar;
     switch (state) {
-        case 'N':
+        case NONE:
             stateChar = 'N';
             break;
-        case 'S':
+        case SHIP:
             stateChar = 'S';
             break;
-        case 'H':
+        case HIT:
             stateChar = 'H';
             break;
-        case 'W':
+        case WATER:
             stateChar = 'W';
             break;
         default:
-            stateChar = '?';
             break;
     }
     return stateChar;

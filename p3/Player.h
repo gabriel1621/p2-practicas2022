@@ -15,7 +15,7 @@ class Player{
         vector<Ship> ships;
         Coordinate board[10][10];
     public:
-        Player(string name);
+        Player(const std::string& name);
         string getName() const;
         void addShip(const Coordinate& pos,ShipType type,Orientation orientation);
         void addShips(string ships);

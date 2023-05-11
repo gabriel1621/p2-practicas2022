@@ -25,7 +25,7 @@ enum ShipState {
 };
 
 class Ship {
-    private:
+    protected:
         ShipState state;
         ShipType type;
         std::vector<Coordinate*> positions;

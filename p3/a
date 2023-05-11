@@ -1,0 +1,29 @@
+//Gabriel Pardo - 48775081Q
+#ifndef PLAYER_H
+#define PLAYER_H
+
+#include <string>
+#include <vector>
+#include "Ship.h"
+#include "Coordinate.h"
+
+using namespace std;
+class Player {
+protected:
+    std::string name;
+    vector<Ship*> ships;
+    //std::vector<Ship*> ships;
+    Coordinate board[10][10];
+
+public:
+    Player(const std::string& name);
+    std::string getName() const;
+    void addShip(const Coordinate& pos, ShipType type, Orientation orientation);
+    void addShips(const std::string& ships);
+    bool attack(const Coordinate& coord);
+    bool attack(const std::string& coord);
+
+    friend std::ostream& operator<<(std::ostream& os, const Player& player);
+};
+
+#endif // PLAYER_H

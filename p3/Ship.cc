@@ -111,16 +111,16 @@ string Ship::getTypeName() const{
     string typeName;
     switch (type) {
         case SUBMARINE:
-            typeName = "Submarine";
+            typeName = "SUBMARINE";
             break;
         case DESTROYER:
-            typeName = "Destroyer";
+            typeName = "DESTROYER";
             break;
         case CRUISE:
-            typeName = "Cruise";
+            typeName = "CRUISE";
             break;
         case BATTLESHIP:
-            typeName = "Battleship";
+            typeName = "BATTLESHIP";
             break;
         default:
             typeName = "Unknown";
@@ -141,14 +141,16 @@ ostream& operator<<(ostream& os, const Ship& ship) {
             os << "S";
             break;
     }
-    os << "): ";/*
-    for (int i = 0; i < ship.shipSize(); i++) {
-        //almacenar el tipo en una funcion
+    os << "): ";
+
+    ShipType tipo=ship.getType();
+    for (int i = 0; i < ship.shipSize(tipo); i++) {
+        //almacenar el tipo en una variable
         os << *ship.getPosition(i);
-        if (i != ship.shipSize(type) - 1) {
+        if (i != ship.shipSize(tipo) - 1) {
             os << " ";
         }
-    }*/
+    }
     os << "\n";
     return os;
 }

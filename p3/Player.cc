@@ -1,65 +1,72 @@
+
 /*
 #include "Player.h"
 #include "Ship.h"
 #include "Util.h"
 #include "Coordinate.h"
 
-Player::Player(string name) : name(name) {
-
+Player::Player(const std::string& name) : name(name) {
+    // Crear el tablero de coordenadas 10x10
+    for (int row = 0; row < 10; ++row) {
+        for (int col = 0; col < 10; ++col) {
+            Coordinate* coord = new Coordinate(row, col);
+            board[row][col] = coord;
+        }
+    }
 }
 
 string Player::getName() const {
     return name;
 }
-
 void Player::addShip(const Coordinate& pos, ShipType type, Orientation orientation) {
-    int shipSize = Ship::shipSize(type);
-
-    // Comprobar que el jugador no tenga ya en el tablero el máximo número de barcos de ese tipo
-    int count = 0;
-    for (const Ship& s : ships) {
-        if (s.getType() == type) {
-            count++;
+    // Comprobar si se ha alcanzado el máximo número de barcos de ese tipo
+    int maxShipTypeCount = Ship::shipSize(type);
+    int currentShipTypeCount = 0;
+    for (Ship* ship : ships) {
+        if (ship->getType() == type) {
+            currentShipTypeCount++;
         }
     }
-    if (count >= Ship::maxShipCount(type)) {
+    if (currentShipTypeCount >= maxShipTypeCount) {
         throw EXCEPTION_MAX_SHIP_TYPE;
     }
 
-    // Comprobar que la partida no se ha iniciado ya
-    for (int i = 0; i < BOARDSIZE; i++) {
-        for (int j = 0; j < BOARDSIZE; j++) {
-            if (board[i][j].getState() == WATER || board[i][j].getState() == HIT) {
+    // Comprobar si la partida ya ha iniciado
+    for (int row = 0; row < 10; ++row) {
+        for (int col = 0; col < 10; ++col) {
+            if (board[row][col]->getState() == CellState::WATER || board[row][col]->getState() == CellState::HIT) {
                 throw EXCEPTION_GAME_STARTED;
             }
         }
     }
 
-    // Construir el vector de punteros a coordenadas necesario para crear el barco
-    vector<Coordinate*> shipCoords;
-    shipCoords.push_back(&board[pos.getRow()][pos.getCol()]);
-
-    for (int i = 1; i < shipSize; i++) {
-        Coordinate offset = Coordinate::addOffset(pos, orientation, i);
-        if (!offset.inBounds()) {
+    // Construir el vector de coordenadas del barco
+    std::vector<Coordinate*> shipCoords;
+    Coordinate currentPos = pos;
+    for (unsigned int i = 0; i < Ship::shipSize(type); ++i) {
+        // Comprobar si la coordenada está dentro del tablero
+        if (currentPos.getRow() < 0 || currentPos.getRow() >= 10 || currentPos.getColumn() < 0 || currentPos.getColumn() >= 10) {
             throw EXCEPTION_OUTSIDE;
         }
-        Coordinate* pCoord = &board[offset.getRow()][offset.getCol()];
-        if (pCoord->getState() != NONE) {
+
+        // Comprobar si la coordenada del tablero está vacía
+        if (board[currentPos.getRow()][currentPos.getColumn()]->getState() != CellState::NONE) {
             throw EXCEPTION_NONFREE_POSITION;
         }
-        shipCoords.push_back(pCoord);
+
+        // Agregar la coordenada al vector de coordenadas del barco
+        shipCoords.push_back(board[currentPos.getRow()][currentPos.getColumn()]);
+
+        // Calcular la siguiente posición en base a la orientación
+        currentPos = currentPos.addOffset(1, orientation);
     }
 
-    // Crear y añadir el barco al vector de barcos del jugador
-    Ship newShip(type, shipCoords);
+    // Crear el barco y almacenarlo en el vector de barcos del jugador
+    Ship* newShip = new Ship(type, shipCoords);
     ships.push_back(newShip);
-
-    // Marcar las coordenadas del tablero como ocupadas por el barco
-    for (Coordinate* pCoord : shipCoords) {
-        pCoord->setState(OCCUPIED);
-    }
 }
+
+
 void Player::addShips(string ships) {
     stringstream ss(ships);
     string ship;

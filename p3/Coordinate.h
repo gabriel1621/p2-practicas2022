@@ -21,7 +21,7 @@ WEST
 };
 
 class Coordinate {
-private:
+protected:
     int row;
     int column;
     CellState state;
