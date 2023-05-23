@@ -1,6 +1,5 @@
 #include "Ship.h"
 #include "Util.h"
-
 Ship::Ship(ShipType type, const vector<Coordinate*>& positions) {
     if (positions.size() != static_cast<size_t>(type)) {
         throw EXCEPTION_WRONG_COORDINATES;
@@ -12,6 +11,8 @@ Ship::Ship(ShipType type, const vector<Coordinate*>& positions) {
     }
     state = OK;
 }
+
+
 
 
       
@@ -66,7 +67,7 @@ Si la posición ya tenía el estado HIT, lanza la excepción EXCEPTION_ALREADY_H
 
 Si ninguna de las posiciones del barco coincide con la coordenada, el método devuelve false. En caso contrario, devuelve true si el ataque ha sido un acierto (es decir, la posición estaba en estado SHIP) y no ha lanzado ninguna excepción.*/
 
-bool Ship::hit(const Coordinate &coord){
+bool Ship::hit(const Coordinate& coord) {
     bool hit = false;
     for (unsigned i = 0; i < positions.size(); i++) {
         if (coord.compare(*positions[i]) == 0) {
@@ -76,28 +77,17 @@ bool Ship::hit(const Coordinate &coord){
                 if (state == OK) {
                     if (type == SUBMARINE) {
                         state = SUNK;
-                    }
-                    else {
+                    } else {
                         state = DAMAGED;
                     }
-                }
-                else if (state == DAMAGED) {
-                    bool all_hit = true;
-                    for (unsigned j = 0; j < positions.size(); j++) {
-                        if (positions[j]->getState() == SHIP) {
-                            all_hit = false;
-                            break;
-                        }
-                    }
-                    if (all_hit) {
+                } else if (state == DAMAGED) {
+                    if (i == positions.size() - 1) {
                         state = SUNK;
                     }
-                }
-                else if (state == SUNK) {
+                } else if (state == SUNK) {
                     throw EXCEPTION_ALREADY_SUNK;
                 }
-            }
-            else {
+            } else {
                 throw EXCEPTION_ALREADY_HIT;
             }
             break;
@@ -128,6 +118,7 @@ string Ship::getTypeName() const{
     }
     return typeName;
 }
+
 ostream& operator<<(ostream& os, const Ship& ship) {
    os << ship.getTypeName() << " (";
     switch (ship.getState()) {
@@ -144,13 +135,13 @@ ostream& operator<<(ostream& os, const Ship& ship) {
     os << "): ";
 
     ShipType tipo=ship.getType();
-    for (int i = 0; i < ship.shipSize(tipo); i++) {
+    for (unsigned int i = 0; i < ship.shipSize(tipo); i++) {
         //almacenar el tipo en una variable
         os << *ship.getPosition(i);
         if (i != ship.shipSize(tipo) - 1) {
             os << " ";
         }
     }
-    os << "\n";
+    os << endl;
     return os;
 }

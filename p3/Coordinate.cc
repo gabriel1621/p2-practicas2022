@@ -60,8 +60,7 @@ char Coordinate::getStateChar() const{
         case WATER:
             stateChar = 'W';
             break;
-        default:
-            break;
+
     }
     return stateChar;
 }
@@ -99,12 +98,11 @@ Coordinate Coordinate::addOffset(int offset, Orientation orientation) const {
         case WEST:
             newColumn -= offset;
             break;
-        default:
-            // Invalid orientation, return the original coordinate
-            return *this;
     }
 
-    return Coordinate(newRow, newColumn);
+    Coordinate coord(newRow, newColumn);
+    coord.setState(NONE);
+    return coord;
 }
 
 Orientation Coordinate::orientationFromChar(char orientation) {
