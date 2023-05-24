@@ -2,6 +2,9 @@
 #include "Ship.h"
 #include "Util.h"
 #include "Coordinate.h"
+#include <iostream>  // Agregado
+
+using namespace std;
 
 Player::Player(const std::string& name) : name(name) {
     // Crear el tablero de coordenadas 10x10
@@ -39,7 +42,8 @@ void Player::addShip(const Coordinate& pos, ShipType type, Orientation orientati
     }
 
     // Construir el vector de coordenadas del barco
-    std::vector<Coordinate> shipCoords;
+    std::vector<Coordinate*> shipCoords;
+
     Coordinate currentPos = pos;
     for (unsigned int i = 0; i < Ship::shipSize(type); ++i) {
         // Comprobar si la coordenada está dentro del tablero
@@ -53,14 +57,15 @@ void Player::addShip(const Coordinate& pos, ShipType type, Orientation orientati
         }
 
         // Agregar la coordenada al vector de coordenadas del barco
-        shipCoords.push_back(board[currentPos.getRow()][currentPos.getColumn()]);
+        shipCoords.push_back(&board[currentPos.getRow()][currentPos.getColumn()]);
 
         // Calcular la siguiente posición en base a la orientación
         currentPos = currentPos.addOffset(1, orientation);
     }
 
     // Crear el barco y almacenarlo en el vector de barcos del jugador
-    Ship newShip(type, const shipCoords);
+    Ship newShip(type, shipCoords);
+
     ships.push_back(newShip);
 }
 
@@ -71,14 +76,33 @@ void Player::addShips( std::string ships) {
         char type = ship[0];
         std::string coord = ship.substr(2, 2);
         char orientation = ship[4];
+        
+        ShipType shipType;
         try {
-            ShipType shipType = Ship::typeFromChar(type);
-            Coordinate position = Coordinate(coord);
-            Orientation shipOrientation = Coordinate::orientationFromChar(orientation);
-            addShip(position, shipType, shipOrientation);
+            shipType = Ship::typeFromChar(type);
         } catch (const std::invalid_argument& e) {
-            throw;
+            // Manejar el error de tipo de barco no válido si es necesario
+            continue;  // O puedes elegir otra acción apropiada
+            
         }
+
+        Coordinate position;
+        try {
+            position = Coordinate(coord);
+        } catch (const std::invalid_argument& e) {
+            // Manejar el error de coordenada no válida si es necesario
+            continue;  // O puedes elegir otra acción apropiada
+        }
+        
+        Orientation shipOrientation;
+        try {
+            shipOrientation = Coordinate::orientationFromChar(orientation);
+        } catch (const std::invalid_argument& e) {
+            // Manejar el error de orientación no válida si es necesario
+            continue;  // O puedes elegir otra acción apropiada
+        }
+
+        addShip(position, shipType, shipOrientation);
     }
 }
 
@@ -98,7 +122,7 @@ bool Player::attack(const Coordinate& coord) {
     return hit;
 }
 
-bool Player::attack(string coord) {
+bool Player::attack( std::string coord) {  // Corregido
     try {
         int row = coord[1] - '0';
         int col = coord[0] - 'A';
@@ -108,8 +132,9 @@ bool Player::attack(string coord) {
         return false;
     }
 }
+
 ostream& operator<<(ostream& os, const Player& player) {
-    os << player.name << ":" <<endl<<endl;
+    os << player.name << ":" << endl << endl;
     os << "  ";
     for (int col = 0; col < 10; ++col) {
         if (col == 9) {
@@ -127,15 +152,16 @@ ostream& operator<<(ostream& os, const Player& player) {
             os << char(row + 'A' - 1) << " ";
         }
         for (int col = 0; col < 10; ++col) {
-            os << " " << player.board.get(Coordinate(row, col)).symbol();
+            os << " " << (player.board[row][col].getState() == CellState::HIT ? "X" : " ");
         }
         os << endl;
     }
     os << endl;
-    os << "Ships:"<<endl<<endl;
+    os << "Ships:" << endl << endl;
     for (auto ship : player.ships) {
-        os << "  " << ship << "  " << Coordinate::getStateChar() << endl;
+        os << "  " << ship << "  " << player.board[0][0].getStateChar() << std::endl;
     }
     os << endl;
     return os;
 }
+

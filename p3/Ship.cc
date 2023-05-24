@@ -73,7 +73,7 @@ bool Ship::hit(const Coordinate& coord) {
         if (coord.compare(*positions[i]) == 0) {
             if (positions[i]->getState() == SHIP) {
                 hit = true;
-                positions[i]->setState(HIT);
+                positions[i+1]->setState(HIT);
                 if (state == OK) {
                     if (type == SUBMARINE) {
                         state = SUNK;
@@ -81,7 +81,7 @@ bool Ship::hit(const Coordinate& coord) {
                         state = DAMAGED;
                     }
                 } else if (state == DAMAGED) {
-                    if (i == positions.size() - 1) {
+                    if (i == positions.size() -1) {
                         state = SUNK;
                     }
                 } else if (state == SUNK) {

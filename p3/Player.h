@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <sstream>
 #include "Coordinate.h"
 #include "Ship.h"
 
